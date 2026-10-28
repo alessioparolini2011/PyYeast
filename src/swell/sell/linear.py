@@ -12,7 +12,7 @@ from torch import nn
 
 from torch.nn import functional as f
 
-from pysenn.exceptions import XLayersError, LayersValueError, LayersTypeError
+from swell.exceptions import XLayersError, LayersValueError, LayersTypeError
 
 
 class XLinear(nn.Module):

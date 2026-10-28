@@ -58,19 +58,20 @@ Groups one ExpLayer + one FilterLayer (putting a ReLU between them) inside a nn.
 To install the package, run:
 
 ```bash
-pip install pysenn
+pip install swell
 ```
 
 As I showed before, you can use a ExpModule to implement a SELL in your nn:
 
 ```python
-from pysenn.sell import ExpModule
+from swell.sell import ExpModule
 
-module = ExpModule(in_features=10, out_features=22) # use it like a normal layer, the features inside manage everything for you
+module = ExpModule(in_features=10,
+                   out_features=22)  # use it like a normal layer, the features inside manage everything for you
 
-module.expand(4) # add 4 neurons
+module.expand(4)  # add 4 neurons
 
-module(x) # use it like a normal nn.Module
+module(x)  # use it like a normal nn.Module
 ```
 
 >![WARNING]
@@ -82,17 +83,17 @@ Here's how you should do to use a SGD optimizer:
 
 import torch.optim as optim
 
-from pysenn.sell import ExpModule
+from swell.sell import ExpModule
 
 senn = ExpModule(in_features=5, out_features=10)
 
-optimizer = optim.SGD(model.parameters(), lr=0.01) # model is a fake nn.Module with static and self-expanding layers
+optimizer = optim.SGD(model.parameters(), lr=0.01)  # model is a fake nn.Module with static and self-expanding layers
 
 ...
 
-senn.expand(4) # expand
+senn.expand(4)  # expand
 
-optimizer = optim.SGD(model.parameters(), lr=0.01) # CREATE A NEW OPTIMIZER!
+optimizer = optim.SGD(model.parameters(), lr=0.01)  # CREATE A NEW OPTIMIZER!
 
 ```
 
