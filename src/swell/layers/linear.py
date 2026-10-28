@@ -69,11 +69,11 @@ class XLinear(nn.Module):
 
             self._expansion = expansion # expansion rate calculating (if it's calculated by the SENN optimizer, it considers also layer exp_rate)
 
-            new_neurons = torch.randn(self._expansion, self.in_features, device=self.weights.device, dtype=self.weights.dtype) # new neurons creating
+            new_neurons = torch.zeros(self._expansion, self.in_features, device=self.weights.device, dtype=self.weights.dtype) # new neurons creating
 
-            self.weights = nn.Parameter(data=torch.cat([self.weights.detach(), new_neurons], dim=0)) # add them to the layers weights
+            self.weights = nn.Parameter(data=torch.cat([self.weights, new_neurons], dim=0)) # add them to the layers weights
 
-            self.out_features += self._expansion # out_features updating
+            self.out_features = self.weights.size(0) # out_features updating
 
         except ValueError as v:
 
@@ -87,6 +87,29 @@ class XLinear(nn.Module):
 
             raise XLayersError(f"Generic error during a XLayer expansion:\n{e}")
 
+    def _input_adapting(self, x)-> None:
+
+        """
+        Detect if the input tensor is different (because of a previous layer expansion) and adapt the structure
+        to avoid crashes.
+        :param x: the input tensor
+        :return: None
+        """
+
+        x_size = x.size(1) # get the number of inputs in the input tensor
+
+        extra_size = x_size - self.in_features # check if are more than the previous epoch
+
+        if extra_size == 0: # if it's not return
+
+            return
+
+        new_param = torch.zeros(self.weights.size(0), extra_size, device=self.weights.device, dtype=self.weights.dtype)
+
+        self.weights = nn.Parameter(torch.cat([self.weights, new_param], dim=1)) # add new weights
+
+        self.in_features = self.weights.size(1) # update the in_features value
+
     def forward(self, x):
 
         """
@@ -98,15 +121,13 @@ class XLinear(nn.Module):
 
         try:
 
-            x_size = x.size()
+            self._input_adapting(x)
 
-            out = f.linear(x, self.weights[:(self.out_features - self._expansion)])
-
-            zeros = torch.zeros_like(out[:, :self._expansion])
+            out = f.linear(x, self.weights)
 
             self._expansion = 0
 
-            return torch.cat([out, zeros], dim=1)
+            return out
 
         except ValueError as v:
 
