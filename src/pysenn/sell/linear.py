@@ -1,34 +1,57 @@
 """
 linear.py
 Authors: Alessio Parolini
-This file contains the resources to implement SELLs (Self Expanding Linear Layers) in a static neural network
+This file contains the resources to create a XLayer (a self expanding linear layer)
 """
 
-__all__ = ["ExpLayer"]
+__all__ = ["XLinear"]
 
 import torch
 
-from torch.nn import functional as f
-
 from torch import nn
 
-class ExpLayer(nn.Module):
+from torch.nn import functional as f
 
-    def __init__(self, in_features:int, out_features:int, exp_rate:int = 4):
+from pysenn.exceptions import XLayersError, LayersValueError, LayersTypeError
+
+
+class XLinear(nn.Module):
+
+    """
+    This class creates a XLinear, abbreviation of expanding linear (layer).
+    This is a special linear layer, because it can expand its structure automatically,
+    both for user instructions and for the expansion of previous layers
+    """
+
+    def __init__(self, in_features:int, out_features:int | None, exp_rate:int = 1):
 
         """
-        :param in_features: the number of weights for neuron in the layer - don't change
-        :param out_features: the initial number of neurons - change over time
-        :param exp_rate: how many neuron adds every time the layer expands itself
+        :param in_features: the number of starting inputs (with None it detects it by itself)
+        :param out_features: the number of out features (this must be entered!)
+        :param exp_rate: the numbers of neurons created for
         """
 
         super().__init__()
 
-        self.in_features = in_features
+        if in_features is not None and not isinstance(in_features, int):
+
+            raise LayersTypeError("Wrong argument: 'in_features' must be an integer")
+
+        self.in_features = in_features if in_features else 0
+
+        if not out_features:
+
+            raise LayersValueError("Missing argument: 'out_features' cannot be None!")
+
+        if not isinstance(out_features, int):
+
+            raise LayersTypeError("Wrong argument: 'out_features' must be a integer!")
 
         self.out_features = out_features
 
-        self.exp_rate = exp_rate
+        if not isinstance(exp_rate, int):
+
+            raise LayersTypeError("Wrong argument: 'exp_rate' must be an integer!")
 
         self.weights = nn.Parameter(data=(torch.randn(self.out_features, self.in_features)))
 
@@ -38,33 +61,61 @@ class ExpLayer(nn.Module):
 
         """
         Adds the new neurons, making expansion possible.
-        :expansion: there is a difference between exp_rate and _expansion (for future improvement), so I add expansion. Also is a better structure for FilterLayer
+        :expansion: the expansion is given by the SENN optimizer to choose how much expand the layer
         :return: None
         """
 
-        self._expansion = expansion if expansion is not None else self.exp_rate
+        try:
 
-        new_neurons = torch.randn(self._expansion, self.in_features)
+            self._expansion = expansion # expansion rate calculating (if it's calculated by the SENN optimizer, it considers also layer exp_rate)
 
-        self.weights = nn.Parameter(data=torch.cat([self.weights.data, new_neurons], dim=0))
+            new_neurons = torch.randn(self._expansion, self.in_features, device=self.weights.device, dtype=self.weights.dtype) # new neurons creating
 
-        self.out_features += self._expansion
+            self.weights = nn.Parameter(data=torch.cat([self.weights.detach(), new_neurons], dim=0)) # add them to the layers weights
 
-        print("Expansion done!")
+            self.out_features += self._expansion # out_features updating
+
+        except ValueError as v:
+
+            raise LayersValueError(f"Value error during a XLayer expansion:\n{v}")
+
+        except TypeError as t:
+
+            raise LayersTypeError(f"Type error during a XLayer expansion:\n{t}")
+
+        except Exception as e:
+
+            raise XLayersError(f"Generic error during a XLayer expansion:\n{e}")
 
     def forward(self, x):
 
         """
-        This function uses a particular logic, because the first epoch with new parameters, they have to be 0,
-        because having no gradient they can increase the loss and ruin all the progress of the nn
+        Get the input and process it using the layer parameters.
+        It auto-adapts itself if the X isn't the same of the precedent epoch (for example: a previous layer expanded itself)
         :param x: the input tensor
         :return: the layer output
         """
 
-        out = f.linear(x, self.weights[:(self.out_features - self._expansion)])
+        try:
 
-        zeros = torch.zeros(x.size(0), self._expansion, device=x.device, dtype=x.dtype)
+            x_size = x.size()
 
-        self._expansion = 0
+            out = f.linear(x, self.weights[:(self.out_features - self._expansion)])
 
-        return torch.cat([out, zeros], dim=1)
+            zeros = torch.zeros_like(out[:, :self._expansion])
+
+            self._expansion = 0
+
+            return torch.cat([out, zeros], dim=1)
+
+        except ValueError as v:
+
+            raise LayersValueError(f"Value error during a XLayer forward function:\n{v}")
+
+        except TypeError as t:
+
+            raise LayersTypeError(f"Type error during a XLayer forward function:\n{t}")
+
+        except Exception as e:
+
+            raise XLayersError(f"Generic error during a XLayer forward function:\n{e}")
