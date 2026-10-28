@@ -12,7 +12,7 @@ requires-python = ">=3.12"
 authors = [
     {name = "Alessio Parolini", email = "alepar.ap9@gmail.com"}
 ]
-description = "pysenn - A Python package, based on PyTorch, to build Self Expanding Neural Networks and train them with an optimezed process."
+description = "swell - A Python package, based on PyTorch, to build Self Expanding Neural Networks and train them with an optimezed process."
 readme = "README.md"
 dependencies = [
     "torch==2.14.1",
