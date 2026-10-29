@@ -15,7 +15,7 @@ requires-python = ">=3.12"
 authors = [
     {name = "Alessio Parolini", email = "alepar.ap9@gmail.com"}
 ]
-description = "PyYeast - A Python library, based on PyTorch, to build and manage, for now (I'm in the Beta version), self-expanding linear layers.
+description = "PyYeast - A Python library, based on PyTorch, to build and manage, for now (I'm in the Beta version), self-expanding linear layers."
 readme = "README.md"
 dependencies = [
     "torch==2.14.1",
