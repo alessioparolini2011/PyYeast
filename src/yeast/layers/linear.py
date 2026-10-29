@@ -12,7 +12,7 @@ from torch import nn
 
 from torch.nn import functional as f
 
-from swell.exceptions import XLayersError, LayersValueError, LayersTypeError
+from yeast.exceptions import XLayersError, LayersValueError, LayersTypeError
 
 
 class XLinear(nn.Module):
@@ -23,12 +23,12 @@ class XLinear(nn.Module):
     both for user instructions and for the expansion of previous layers
     """
 
-    def __init__(self, in_features:int, out_features:int | None, exp_rate:int = 1):
+    def __init__(self, out_features:int, in_features:int | None = None,  exp_rate:int = 1):
 
         """
         :param in_features: the number of starting inputs (with None it detects it by itself)
         :param out_features: the number of out features (this must be entered!)
-        :param exp_rate: the numbers of neurons created for
+        :param exp_rate: how much is the extension increased (for the optimizer)
         """
 
         super().__init__()
@@ -53,6 +53,12 @@ class XLinear(nn.Module):
 
             raise LayersTypeError("Wrong argument: 'exp_rate' must be an integer!")
 
+        if exp_rate <= 0:
+
+            raise LayersValueError("Wrong value: 'exp_rate' must be higher than zero!")
+
+        self.exp_rate = exp_rate
+
         self.weights = nn.Parameter(data=(torch.randn(self.out_features, self.in_features)))
 
         self._expansion = 0
@@ -67,7 +73,7 @@ class XLinear(nn.Module):
 
         try:
 
-            self._expansion = expansion # expansion rate calculating (if it's calculated by the SENN optimizer, it considers also layer exp_rate)
+            self._expansion = expansion * self.exp_rate
 
             new_neurons = torch.zeros(self._expansion, self.in_features, device=self.weights.device, dtype=self.weights.dtype) # new neurons creating
 
@@ -123,11 +129,11 @@ class XLinear(nn.Module):
 
             self._input_adapting(x)
 
-            out = f.linear(x, self.weights)
+            x = f.linear(x, self.weights)
 
             self._expansion = 0
 
-            return out
+            return x
 
         except ValueError as v:
 
