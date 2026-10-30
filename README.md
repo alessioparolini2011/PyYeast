@@ -1,4 +1,4 @@
-![swell logo](./assets/yeast_logo.png)
+![PyYeast logo](https://github.com/alessioparolini2011/PyYeast/blob/master/assets/yeast_logo.png)
 
 ![Python](https://img.shields.io/badge/Python-3.12-FFD43B?style=for-the-badge&logo=python&logoColor=306998)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.14-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=red)
