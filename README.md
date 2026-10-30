@@ -28,3 +28,15 @@ from sub-package **`layers`**
 + **XAdapter**: a XLinear layer, but with a special feature:
     + **the filter layer**: it also has a "hidden" XLinear layer, that takes the output and keep it always identical. Thanks of this, **you can use an XAdapter in a static neural network, avoiding crashes**, because the static after the XAdapter receive always the same sizes tensor.
 
+## Credits
+
+For create this projects, I used the incredible framework [PyTorch](https://pytorch.org/). It gave my the resources to customize my componentes and build from scracth new solutions. 
+
+Thank also, to [Hack Club]([https://hackclub.com/) for give a way to build, meet and play to dev teenagers from all around the world.
+
+## About me
+
+**Hi!** I'm Alessio, a young dev from Verona, Italy 🇮🇹.
+CS is my passion, and I'm working to make it my future. 
+If you're interested to know me, or you just want to have a talk about projects, development or something else...
+See my [GitHub profile](https://github.com/alessioparolini2011) or my [website](https://my-code-portfolio-ten.vercel.app/). Have a good day!
