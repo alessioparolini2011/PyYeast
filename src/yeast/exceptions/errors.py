@@ -4,7 +4,7 @@ Authors: Alessio Parolini
 This file contains the customized Exception classes for the package.
 """
 
-__all__ = ["SwellError", "XLayersError", "LayersTypeError", "LayersValueError"]
+__all__ = ["SwellError", "XLayersError", "LayersTypeError", "LayersValueError", "XOptimizerError", "OptimizerValueError", "OptimizerTypeError"]
 
 class SwellError(Exception):
 
@@ -39,3 +39,23 @@ class LayersValueError(XLayersError, ValueError):
     """
 
     pass
+
+class XOptimizerError(SwellError):
+
+    """
+    The base exception for optimizers
+    """
+
+class OptimizerTypeError(XOptimizerError, TypeError):
+
+    """
+    The exception for wrong types in optimizers
+    """
+
+    pass
+
+class OptimizerValueError(XOptimizerError, ValueError):
+
+    """
+    The exception for wrong values in optimizers
+    """
