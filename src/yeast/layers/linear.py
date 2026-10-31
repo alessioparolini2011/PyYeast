@@ -37,9 +37,9 @@ class XLinear(nn.Module):
 
             raise LayersTypeError("Wrong argument: 'in_features' must be an integer")
 
-        self.in_features = in_features if in_features else 0
+        self.in_features = in_features if in_features is not None else 0
 
-        if not out_features:
+        if out_features is None:
 
             raise LayersValueError("Missing argument: 'out_features' cannot be None!")
 
@@ -63,6 +63,8 @@ class XLinear(nn.Module):
 
         self._expansion = 0
 
+        self._old_parameter_id = None  # to save the deleted parameter and get it (for the optimizer)
+
     def expand(self, expansion: int)-> None:
 
         """
@@ -73,7 +75,7 @@ class XLinear(nn.Module):
 
         try:
 
-            self._expansion = expansion * self.exp_rate
+            self._expansion = expansion * self.exp_rate # calculate how much expand
 
             new_neurons = torch.zeros(self._expansion, self.in_features, device=self.weights.device, dtype=self.weights.dtype) # new neurons creating
 

@@ -5,19 +5,16 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-data]
-yeast = ["../assets/*"]
-
 [project]
 name = "pyyeast"
-version = "0.1.0"
+version = "0.1.1"
 requires-python = ">=3.12"
 authors = [
     {name = "Alessio Parolini", email = "alepar.ap9@gmail.com"}
 ]
-description = "PyYeast - A Python library, based on PyTorch, to build and manage, for now (I'm in the Beta version), self-expanding linear layers."
+description = "Just as yeast makes bread rise, PyYeast makes your neural network grow! PyYeast is a PyTorch-based Python library designed to build and manage Self-Expanding Neural Networks (SENN), enabling your AI models to dynamically restructure during training and boost their performance!"
 readme = "README.md"
 dependencies = [
     "torch==2.14.1",
-    "numpy===2.1.0",
+    "numpy==2.1.0",
 ]
