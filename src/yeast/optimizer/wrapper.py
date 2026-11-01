@@ -4,13 +4,29 @@ Authors: Alessio Parolini
 Contains the resources to make a normal optimizer a SENN-compatible one
 """
 
+from typing import TypedDict
+
+import torch
+
 from torch.optim import Optimizer
 
-from torch.nn import Module
+from torch import nn
 
 from yeast.layers import XLinear
 
 from yeast.exceptions import XOptimizerError, OptimizerValueError, OptimizerTypeError
+
+class LayersDict(TypedDict):
+
+    """
+    This special dictionary saves all the expanding layers and their parameters
+    """
+
+    layer: XLinear
+
+    bias_dict: dict | None
+
+    weight_dict: dict | None
 
 class XOptimWrapper:
 
@@ -19,33 +35,39 @@ class XOptimWrapper:
     that accepts, avoiding errors, new parameters and their state
     """
 
-    def __init__(self, module:Module, optimizer:Optimizer):
+    def __init__(self, module:nn.Module, optimizer:Optimizer):
 
-        if not isinstance(module, Module):
+        if not isinstance(module, nn.Module):
 
             raise OptimizerTypeError("Wrong argument: 'module' must be a PyTorch Module or an his sub-class")
 
-        self.module = module
+        self.module: nn.Module = module
 
         if not isinstance(optimizer, Optimizer):
 
             raise OptimizerTypeError("Wrong argument: 'optimizer' must be a PyTorch Optimizer or an his sub-class")
 
-        self.optimizer = optimizer
+        self.optimizer: Optimizer = optimizer
 
-        self.x_list = []
+        self.xl_list = self._get_xlayers()
 
-    def _get_xlayers(self):
+    def _get_xlayers(self)-> list:
 
-        for name, layer in self.module.named_modules():  # get the expanding layers in the module
+        xl_list = []
+
+        for layer in self.module.modules():  # get the expanding layers in the module
 
             if isinstance(layer, XLinear):
 
-                layer_data = {"name" : name,
-                              "object" : layer,
-                              "exp_rate" : layer.exp_rate}  # in and out features are excluded, due of their elastic structure
+                layer_data: LayersDict = {
+                    "layer" : layer,
+                    "bias_dict" : None,  # empty for now
+                    "weight_dict" : None # the same
+                }
 
-                self.x_list.append(layer_data)
+                xl_list.append(layer_data)
+
+        return xl_list
 
     def layers_expand(self, expansion:int):
 
@@ -59,13 +81,15 @@ class XOptimWrapper:
 
         try:
 
-            for layer_data in self.x_list:
+            for layer_dict in self.xl_list:
 
-                layer = layer_data["object"]
+                layer = layer_dict["layer"]
 
-                exp_rate = layer_data["exp_rate"]
+                layer_dict["bias_dict"] = self.optimizer.state.pop(layer.bias, {})
 
-                layer.expand(expansion=expansion*exp_rate)
+                layer_dict["weight_dict"] = self.optimizer.state.pop(layer.weight, {})
+
+                layer.expand(expansion=expansion*layer.exp_rate)
 
         except ValueError as v:
 
@@ -78,6 +102,17 @@ class XOptimWrapper:
         except Exception as e:
 
             raise XOptimizerError(f"Generic error during a XLayer expansion by the optimizer:\n{e}")
+
+
+    def _update_dict(self, new_parameter:nn.Parameter, old_parameter:nn.Parameter):
+
+        pass
+
+
+
+
+
+
 
 
 
