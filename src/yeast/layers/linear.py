@@ -59,11 +59,11 @@ class XLinear(nn.Module):
 
         self.exp_rate = exp_rate
 
-        self.weights = nn.Parameter(data=(torch.randn(self.out_features, self.in_features)))
+        self.weight = nn.Parameter(data=(torch.randn(self.out_features, self.in_features)))
+
+        self.bias = nn.Parameter(data=(torch.randn(self.out_features)))
 
         self._expansion = 0
-
-        self._old_parameter_id = None  # to save the deleted parameter and get it (for the optimizer)
 
     def expand(self, expansion: int)-> None:
 
@@ -77,11 +77,15 @@ class XLinear(nn.Module):
 
             self._expansion = expansion * self.exp_rate # calculate how much expand
 
-            new_neurons = torch.zeros(self._expansion, self.in_features, device=self.weights.device, dtype=self.weights.dtype) # new neurons creating
+            new_neurons = torch.zeros(self._expansion, self.in_features, device=self.weight.device, dtype=self.weight.dtype) # new neurons creating
 
-            self.weights = nn.Parameter(data=torch.cat([self.weights, new_neurons], dim=0)) # add them to the layers weights
+            self.weight = nn.Parameter(data=torch.cat([self.weight, new_neurons], dim=0)) # add them to the layers weight
 
-            self.out_features = self.weights.size(0) # out_features updating
+            new_bias = torch.zeros(self._expansion, device=self.bias.device, dtype=self.bias.dtype) # creating new bias
+
+            self.bias = nn.Parameter(data=torch.cat([self.bias, new_bias])) # adding to the currents ones
+
+            self.out_features = self.weight.size(0) # out_features updating
 
         except ValueError as v:
 
@@ -112,11 +116,11 @@ class XLinear(nn.Module):
 
             return
 
-        new_param = torch.zeros(self.weights.size(0), extra_size, device=self.weights.device, dtype=self.weights.dtype)
+        new_param = torch.zeros(self.weight.size(0), extra_size, device=self.weight.device, dtype=self.weight.dtype)
 
-        self.weights = nn.Parameter(torch.cat([self.weights, new_param], dim=1)) # add new weights
+        self.weight = nn.Parameter(torch.cat([self.weight, new_param], dim=1)) # add new weight
 
-        self.in_features = self.weights.size(1) # update the in_features value
+        self.in_features = self.weight.size(1) # update the in_features value
 
     def forward(self, x):
 
@@ -131,7 +135,7 @@ class XLinear(nn.Module):
 
             self._input_adapting(x)
 
-            x = f.linear(x, self.weights)
+            x = f.linear(x, self.weight, self.bias)
 
             self._expansion = 0
 
