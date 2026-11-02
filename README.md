@@ -1,8 +1,7 @@
-![PyYeast logo](https://github.com/alessioparolini2011/PyYeast/blob/master/assets/yeast_logo.png)
+![PyYeast logo](https://raw.githubusercontent.com/alessioparolini2011/PyYeast/refs/heads/master/assets/yeast_logo.png)
 
 ![Python](https://img.shields.io/badge/Python-3.12-FFD43B?style=for-the-badge&logo=python&logoColor=306998)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.14-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=red)
-![Numpy](https://img.shields.io/badge/NumPy-2.1-AA0244?style=for-the-badge&logo=numpy&logoColor=white)
 
 ## The project
 
@@ -23,14 +22,34 @@ from sub-package **`layers`**
 
 + **XLinear**: a linear layer that can expand his structure by itself ("*X*" stands for "e*X*panding"). It does it in **2 ways**:
     + **out features expanding**: it increases the number of neurons, **improving the layer capacity**
-    + **in features expanding**: it automatically detects if the input tensor is change, **adding new weights to process it correctly** 
+    + **in features expanding**: it automatically detects if the input tensor is change, **adding new weights to process it correctly**
 
 + **XAdapter**: a XLinear layer, but with a special feature:
     + **the filter layer**: it also has a "hidden" XLinear layer, that takes the output and keep it always identical. Thanks of this, **you can use an XAdapter in a static neural network, avoiding crashes**, because the static after the XAdapter receive always the same sizes tensor.
 
++ **XOptimWrapper**: a special wrapper for PyTorch optimizers, to "upgrade" them into SENN-compatible ones!
+    + given the PyTorch Module and the optimizer associated to it, **XOptimWrapper detects automatically all the expanding layers present within it**.
+    + Then, using the given optimizer, every time it expand the layers, it automatically overwrites the dicts of the old parameter with the new ones. **For now, it only overwrites them. In the future, it will be able to keep the old datas, adding only the new weights at the dict**.
+
+## Quickstart
+
+To use this package, you first need **Python 3.12 (or newest)** on your device.
+  
+Then, run in your terminal:
+
+```bash
+pip install pyyeast
+```
+
+If you want to see the package in action, run the demonstration file (click [here](https://raw.githubusercontent.com/alessioparolini2011/PyYeast/refs/heads/master/src/yeast/examples/demo.py) to see it) with
+
+```bash
+pysenn
+```
+
 ## Credits
 
-For create this projects, I used the incredible framework [PyTorch](https://pytorch.org/). It gave my the resources to customize my componentes and build from scracth new solutions. 
+For create this projects, I used the incredible framework [PyTorch](https://pytorch.org/). It gave my the resources to customize my componentes and build from scratch new solutions. 
 
 Thank also, to [Hack Club]([https://hackclub.com/) for give a way to build, meet and play to dev teenagers from all around the world.
 

@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "pyyeast"
-version = "0.1.1"
+version = "0.2.0"
 requires-python = ">=3.12"
 authors = [
     {name = "Alessio Parolini", email = "alepar.ap9@gmail.com"}
@@ -18,3 +18,7 @@ dependencies = [
     "torch==2.14.1",
     "numpy==2.1.0",
 ]
+
+[projects.scripts]
+
+pysenn = "yeast.examples.demo:main"
