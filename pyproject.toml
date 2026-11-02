@@ -19,6 +19,6 @@ dependencies = [
     "numpy==2.1.0",
 ]
 
-[projects.scripts]
+[project.scripts]
 
 yeast = "yeast.examples.demo:main"
