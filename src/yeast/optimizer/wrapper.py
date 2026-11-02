@@ -22,11 +22,11 @@ class LayersDict(TypedDict):
     This special dictionary saves all the expanding layers and their parameters
     """
 
-    layer: XLinear
+    layer: XLinear  # the object itself
 
-    bias_dict: dict | None
+    bias: nn.Parameter | None
 
-    weight_dict: dict | None
+    weight: nn.Parameter | None  # these two keys will save the bias and the weight of the layer, for use them after the expansion
 
 class XOptimWrapper:
 
@@ -59,19 +59,19 @@ class XOptimWrapper:
 
             if isinstance(layer, XLinear):
 
-                layer_data: LayersDict = {
+                layer_dict: LayersDict = {
                     "layer" : layer,
-                    "bias_dict" : None,  # empty for now
-                    "weight_dict" : None # the same
+                    "bias" : None,  # empty for now
+                    "weight" : None # the same (this keeps the memory free for a little while longer)
                 }
 
-                xl_list.append(layer_data)
+                xl_list.append(layer_dict)
 
         return xl_list
 
     def layers_expand(self, expansion:int):
 
-        if isinstance(expansion, int):
+        if not isinstance(expansion, int):
 
             raise OptimizerTypeError("Wrong argument: 'expansion' must be an integer!")
 
@@ -85,11 +85,13 @@ class XOptimWrapper:
 
                 layer = layer_dict["layer"]
 
-                layer_dict["bias_dict"] = self.optimizer.state.pop(layer.bias, {})
+                layer_dict["bias"] = layer.bias
 
-                layer_dict["weight_dict"] = self.optimizer.state.pop(layer.weight, {})
+                layer_dict["weight"] = layer.weight
 
                 layer.expand(expansion=expansion*layer.exp_rate)
+
+            self._update_dict()
 
         except ValueError as v:
 
@@ -104,16 +106,26 @@ class XOptimWrapper:
             raise XOptimizerError(f"Generic error during a XLayer expansion by the optimizer:\n{e}")
 
 
-    def _update_dict(self, new_parameter:nn.Parameter, old_parameter:nn.Parameter):
+    def _update_dict(self):
 
-        pass
+        """
+        Overwrites the old dict of a parameter (both in 'state' and 'param_group').
+        For now, only overwrite (losing progress). In the future, it will keep the old datas, adding only the new ones
+        :return: None
+        """
 
+        for layer_dict in self.xl_list:
 
+            parameters = (layer_dict["bias"], layer_dict["weight"])
 
+            for group in self.optimizer.param_groups:
 
+                for i, p in enumerate(group["params"]):
 
+                    if p in parameters:
 
+                        group["params"][i] = layer_dict["layer"].bias if p is parameters[0] else layer_dict["layer"].weight  # replaces the old parameter
 
+                        self.optimizer.state.pop(p,None)  # deletes the old parameter state dict
 
-
-
+                        self.optimizer.state[group["params"][i]] = {}  # overwrite the parameter state dict - the lazy initialization will set it automatically
