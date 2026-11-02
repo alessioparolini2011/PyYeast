@@ -29,10 +29,9 @@ class XAdapter(XLinear):
 
         super().__init__(in_features=in_features, out_features=out_features, exp_rate=exp_rate)
 
-        self.weights = nn.Parameter(data=torch.randn(self.out_features, self.in_features))
+        self.filter = XLinear(out_features=self.out_features) #auto-detect the input the first time.
 
-        self.filter = XLinear(out_features=self.out_features) #auto-detect the input the first time
-
+        self.filter.exp_rate = 0 # "exp_rate" is set to zero, so if the XOptimWrapper expand all the XLinear instance, the filter always keep his structure the same. I've done it after the creation to avoid expections
 
     def forward(self, x):
 
@@ -42,7 +41,7 @@ class XAdapter(XLinear):
 
         try:
 
-             x = f.linear(x, self.weights)
+             x = super().forward(x)
 
              x = f.relu(x)
 

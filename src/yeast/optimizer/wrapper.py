@@ -4,15 +4,15 @@ Authors: Alessio Parolini
 Contains the resources to make a normal optimizer a SENN-compatible one
 """
 
-from typing import TypedDict
+__all__ = ["XOptimWrapper"]
 
-import torch
+from typing import TypedDict
 
 from torch.optim import Optimizer
 
 from torch import nn
 
-from yeast.layers import XLinear
+from yeast.layers import XLinear, XAdapter
 
 from yeast.exceptions import XOptimizerError, OptimizerValueError, OptimizerTypeError
 
@@ -49,7 +49,7 @@ class XOptimWrapper:
 
         self.optimizer: Optimizer = optimizer
 
-        self.xl_list = self._get_xlayers()
+        self.xl_list: list[LayersDict] = self._get_xlayers()
 
     def _get_xlayers(self)-> list:
 
@@ -116,15 +116,17 @@ class XOptimWrapper:
 
         for layer_dict in self.xl_list:
 
-            parameters = (layer_dict["bias"], layer_dict["weight"])
+            old_bias = layer_dict["bias"]
+
+            old_weight = layer_dict["weight"]
 
             for group in self.optimizer.param_groups:
 
                 for i, p in enumerate(group["params"]):
 
-                    if p in parameters:
+                    if p is old_bias or p is old_weight:
 
-                        group["params"][i] = layer_dict["layer"].bias if p is parameters[0] else layer_dict["layer"].weight  # replaces the old parameter
+                        group["params"][i] = layer_dict["layer"].bias if p is old_bias else layer_dict["layer"].weight  # replaces the old parameter
 
                         self.optimizer.state.pop(p,None)  # deletes the old parameter state dict
 
