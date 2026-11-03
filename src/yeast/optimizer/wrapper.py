@@ -8,6 +8,8 @@ __all__ = ["XOptimWrapper"]
 
 from typing import TypedDict
 
+import torch
+
 from torch.optim import Optimizer
 
 from torch import nn
@@ -128,6 +130,15 @@ class XOptimWrapper:
 
                         group["params"][i] = layer_dict["layer"].bias if p is old_bias else layer_dict["layer"].weight  # replaces the old parameter
 
-                        self.optimizer.state.pop(p,None)  # deletes the old parameter state dict
+                        for value in self.optimizer.state[p].values(): # analyzing the parameter state dict
 
-                        self.optimizer.state[group["params"][i]] = {}  # overwrite the parameter state dict - the lazy initialization will set it automatically
+                            if isinstance(value, torch.Tensor) and p.shape == value.shape:  # skip the values like "step", that aren't related to the parameter dimension
+
+                                new_dims = torch.zeros(layer_dict["layer"].bias.shape if p is old_bias else layer_dict["layer"].weight.shape)  # creating the zeros tensor with the new parameter dimension
+
+                                data = tuple(slice(0, dim) for dim in p.shape )  # get the current sizes of this value
+
+                                value = new_dims[data] = p  # put in the original place the old data, so they aren't lose
+
+
+
