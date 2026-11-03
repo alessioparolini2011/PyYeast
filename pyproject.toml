@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "pyyeast"
-version = "0.2.1"
+version = "0.2.2"
 requires-python = ">=3.12"
 authors = [
     {name = "Alessio Parolini", email = "alepar.ap9@gmail.com"}
@@ -20,5 +20,4 @@ dependencies = [
 ]
 
 [project.scripts]
-
 yeast = "yeast.examples.demo:main"
