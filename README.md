@@ -44,7 +44,7 @@ pip install pyyeast
 If you want to see the package in action, run the demonstration file (click [here](https://raw.githubusercontent.com/alessioparolini2011/PyYeast/refs/heads/master/src/yeast/examples/demo.py) to see it) with
 
 ```bash
-pysenn
+yeast
 ```
 
 ## Credits
