@@ -37,7 +37,7 @@ class XOptimWrapper:
     that accepts, avoiding errors, new parameters and their state
     """
 
-    def __init__(self, module:nn.Module, optimizer:Optimizer):
+    def __init__(self, module:nn.Module, optimizer:Optimizer, max_params:int):
 
         if not isinstance(module, nn.Module):
 
@@ -52,6 +52,12 @@ class XOptimWrapper:
         self.optimizer: Optimizer = optimizer
 
         self.xl_list: list[LayersDict] = self._get_xlayers()
+
+        if not isinstance(max_params, int):
+
+            raise OptimizerTypeError("Wrong argument: 'max_params' must be an integer!")
+
+        # TODO: check if the max_params value is lower than the initial parameters of the model
 
     def _get_xlayers(self)-> list:
 

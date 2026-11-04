@@ -77,11 +77,11 @@ class XLinear(nn.Module):
 
             self._expansion = expansion * self.exp_rate # calculate how much expand
 
-            new_neurons = torch.zeros(self._expansion, self.in_features, device=self.weight.device, dtype=self.weight.dtype) # new neurons creating
+            new_neurons = torch.randn(self._expansion, self.in_features, device=self.weight.device, dtype=self.weight.dtype) * 1e-2 # new neurons creating with a very low value
 
             self.weight = nn.Parameter(data=torch.cat([self.weight, new_neurons], dim=0)) # add them to the layers weight
 
-            new_bias = torch.zeros(self._expansion, device=self.bias.device, dtype=self.bias.dtype) # creating new bias
+            new_bias = torch.randn(self._expansion, device=self.bias.device, dtype=self.bias.dtype) * 1e-2 # creating new bias
 
             self.bias = nn.Parameter(data=torch.cat([self.bias, new_bias])) # adding to the currents ones
 

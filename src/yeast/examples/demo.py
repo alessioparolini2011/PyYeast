@@ -60,11 +60,11 @@ def main():
 
     criterion = nn.MSELoss()  # choosing the loss function
 
-    input_tensor = torch.rand(10, 1) # creating input
+    input_tensor = torch.rand(100, 1) # creating input
 
     output_tensor = torch.sin(input_tensor) # a simple math operation to find the output
 
-    for epoch in range(1000):
+    for epoch in range(2000):
 
         optimizer.zero_grad()
 
@@ -78,9 +78,9 @@ def main():
 
         print(loss.item())
 
-        if epoch % 5 == 0:
+        if epoch % 10 == 0:
 
-            x_optimizer.layers_expand(expansion=3)  # expanding the expanding layers
+            x_optimizer.layers_expand(expansion=7)  # expanding the expanding layers
 
             print("\nExpansion done!\n")
 
