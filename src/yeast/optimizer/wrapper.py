@@ -57,25 +57,6 @@ class XOptimWrapper:
 
             raise OptimizerTypeError("Wrong argument: 'max_params' must be an integer!")
 
-        # TODO: check if the max_params value is lower than the initial parameters of the model
-
-    def _get_xlayers(self)-> list:
-
-        xl_list = []
-
-        for layer in self.module.modules():  # get the expanding layers in the module
-
-            if isinstance(layer, XLinear):
-
-                layer_dict: LayersDict = {
-                    "layer" : layer,
-                    "bias" : None,  # empty for now
-                    "weight" : None # the same (this keeps the memory free for a little while longer)
-                }
-
-                xl_list.append(layer_dict)
-
-        return xl_list
 
     def layers_expand(self, expansion:int):
 
@@ -112,6 +93,52 @@ class XOptimWrapper:
         except Exception as e:
 
             raise XOptimizerError(f"Generic error during a XLayer expansion by the optimizer:\n{e}")
+
+    def model_size(self, human:bool=False):
+
+        """
+        This function returns the number of parameters of the model (for parameter I mean the single number or weight)
+        :human: True returns the value with a more readable style (like 3M, 4.6T, 4B...), False the pure number (15676, 12, 234...)
+        :return: the value
+        """
+
+        size = sum(p.numel() for p in self.module.parameters() if p.requires_grad)
+
+        if human:
+
+            if size < 1e3:
+
+                return size
+
+            if size < 1e6:
+
+                return f"{size/1e6:.1f}M"
+
+            if size < 1e9:
+
+                return f"{size/1e9:.1f}B"
+
+            return f"{size/1e12:.1f}T"
+
+        return size
+
+    def _get_xlayers(self)-> list:
+
+        xl_list = []
+
+        for layer in self.module.modules():  # get the expanding layers in the module
+
+            if isinstance(layer, XLinear):
+
+                layer_dict: LayersDict = {
+                    "layer" : layer,
+                    "bias" : None,  # empty for now
+                    "weight" : None # the same (this keeps the memory free for a little while longer)
+                }
+
+                xl_list.append(layer_dict)
+
+        return xl_list
 
 
     def _update_dict(self):
