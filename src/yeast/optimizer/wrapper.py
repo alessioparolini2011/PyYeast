@@ -58,7 +58,13 @@ class XOptimWrapper:
             raise OptimizerTypeError("Wrong argument: 'max_params' must be an integer!")
 
 
-    def layers_expand(self, expansion:int):
+    def step(self, expansion: int):
+
+        """
+        Expand the layers the optimizers manages
+        :param expansion: how much expand
+        :return: None
+        """
 
         if not isinstance(expansion, int):
 

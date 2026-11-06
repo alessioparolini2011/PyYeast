@@ -5,8 +5,8 @@
 ![HackClub](https://img.shields.io/badge/Hack%20Club-Terra-191970?style=for-the-badge&logo=hackclub&logoColor=white)
 
 
-**LATEST RELEASE ->
-[See on PyPI](https://pypi.org/project/pyyeast/) <-** 
+**LATEST RELEASE →
+[See on PyPI](https://pypi.org/project/pyyeast/) ←** 
 
 ## The project
 
