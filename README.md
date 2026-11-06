@@ -2,6 +2,8 @@
 
 ![Python](https://img.shields.io/badge/Python-3.12-FFD43B?style=for-the-badge&logo=python&logoColor=306998)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.14-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=red)
+![HackClub](https://img.shields.io/badge/Hack%20Club-Terra-191970?style=for-the-badge&logo=hackclub&logoColor=white)
+
 
 **LATEST RELEASE ->
 [See on PyPI](https://pypi.org/project/pyyeast/) <-** 
