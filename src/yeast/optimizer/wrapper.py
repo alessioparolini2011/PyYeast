@@ -102,6 +102,10 @@ class XOptimWrapper:
         :return: the value
         """
 
+        if not isinstance(human, bool):
+
+            raise OptimizerTypeError("Wrong argument: 'human' must be a boolean value!")
+
         size = sum(p.numel() for p in self.module.parameters() if p.requires_grad)
 
         if human:
@@ -112,9 +116,13 @@ class XOptimWrapper:
 
             if size < 1e6:
 
-                return f"{size/1e6:.1f}M"
+                return f"{size/1e3:.1f}K"
 
             if size < 1e9:
+
+                return f"{size/1e6:.1f}M"
+
+            if size < 1e12:
 
                 return f"{size/1e9:.1f}B"
 
@@ -157,7 +165,7 @@ class XOptimWrapper:
 
             old_weight = layer_dict["weight"]
 
-            for group in self.optimizer.param_groups:
+            for group in self.optimizer.param_groups: # replace every old parameter in the param_group
 
                 for i, p in enumerate(group["params"]):
 
@@ -167,7 +175,7 @@ class XOptimWrapper:
 
                         new_param = group["params"][i]
 
-                        if p in self.optimizer.state:
+                        if p in self.optimizer.state:  # and updates the parameter in the state_dict
 
                             old_state = self.optimizer.state[p]
 

@@ -21,8 +21,6 @@ After I learned the basics, I started to build this package, **using low-level i
 
 ## Resources
 
----
-
 ### yeast.layers
 
 #### XLinear
@@ -80,7 +78,9 @@ These are the 2 attributes an XLinear instance has:
 **Features**
 
 + `XAdapter` is a double-layer sistem, **consisting of two expanding layer, with A ReLU in the middle**
+
 + What makes it special is that the second layer, the *Filter Layer*, that **only expand "horizontally", keeping the size of its output tensor always the same**. 
+
 + In this way, **you can add expanding layers in static neural networks**, because the *Filter Layer* takes care, **all by itself** (you don't need to do anything) to give to the next layer, a static one, **always the same size tensor**
 
 **Initializing**
@@ -108,8 +108,11 @@ See [XLinear](#xlinear), it's the same
 **Features**
 
 + `XOptimWrapper` is a special wrapper for PyTorch optimizers. In fact, **a normal optimizers cannot work with an expanding layer**, because the dicts of the parameters are set when the optimizer itself is created.
+
 + This class is built to solve this problem: it takes as arguments the model and the related optimizer, **and every time the layers expand, it automatically updates the dicts of the parameters.**
+
 + It also manages the expansion of all the layers (that it detects by itself when it's created) of the model
+
 >[!WARNING]
 > If you're using a `XOptimWrapper` instance, be sure of use only it to expand the layers. Because if you expand a single layer manually, its parameters dicts won't be updated. I'll fix this in the next versions
 
@@ -131,6 +134,7 @@ x_optim_wrapper = optimizer.XOptimWrapper(module=model, optimizer=optim)
 There are two arguments an `XOptimWrapper` needs when it's created:
 
 + `module: nn.Module`: the model, instance of nn.Module (it requires the entire module because it needs to get the expanding layers from it)
+
 + `optimizer: optim.Optimizer`: given the optimizer, every time the layers expand themselves, it updates the optimizer dict, **leaving old progress and adding only the blank spaces for new data**. All it's done automatically.
 
 **Usage**
@@ -143,12 +147,18 @@ USING THE PRECEDENT SNIPPET RESOURCES
 
 x_optim_wrapper.layers_expand(expansion=3)
 
+print(x_optim_wrapper.model_size(human=False)) # OUTPUT EXAMPLE: 2'589'567'776
+
+print(x_optim_wrapper.model_size(human=True)) # OUTPUT EXAMPLE: 2.5T
+
 ```
 
 + `layers_expansion(expansion: int)`: for every expanding layers in the module passed in the argument, it expands his structure, **like you calling `layer.expand(expansion=4)` for every expanding layer in the module**
 
++ `model_size(human: bool)`: return the number of parameters (understood as the individual weights and biases) of the model. With `human` as `True`, **returns the number as a more readable alphanumeric combination** (*2.3T*, *4B*...), else returns **the pure number** (*22345*, *123*...)
+
 >[!WARNING]
-> If you use `XOptimWrapper` you've still to do `loss.backward()`, `optimizer.step()`, `optimizer.zero_grad()` and all that stuff, **because (for now) the `XOptimWrapper` don't do it by itself**
+> If you use `XOptimWrapper` you've still to do `loss.backward()`, `optimizer.step()`, `optimizer.zero_grad()` and all that stuff, **because the `XOptimWrapper` don't do it by itself**
 
 ---
 
