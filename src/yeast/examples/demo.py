@@ -62,7 +62,7 @@ def main():
 
     optimizer = optim.Adam(model.parameters(), lr=0.01)  # creating the optimizer
 
-    x_optimizer = XOptimWrapper(module=model, optimizer=optimizer, max_params=int(1e6)) # creating the SENN-compatible optimizer with a limit of 100000 parameters
+    x_optimizer = XOptimWrapper(module=model, optimizer=optimizer, max_params=int(1e8)) # creating the SENN-compatible optimizer with a limit of 100000 parameters
 
     criterion = nn.MSELoss()  # choosing the loss function
 
