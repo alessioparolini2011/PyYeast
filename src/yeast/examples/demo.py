@@ -10,7 +10,7 @@ from torch import nn
 
 from torch import optim
 
-from yeast.layers import XAdapter
+from yeast.layers import XAdapter, XLinear
 
 from yeast.optimizer import XOptimWrapper
 
@@ -24,7 +24,9 @@ class MyModule(nn.Module):
 
         self.layer1 = nn.Linear(in_features=1, out_features=5)
 
-        self.sell = XAdapter(in_features=5, out_features=10, exp_rate=2)
+        self.sell = XLinear(in_features=5, out_features=7, exp_rate=1)
+
+        self.adapter = XAdapter(in_features=7, out_features=10, exp_rate=2)
 
         self.layer3 = nn.Linear(in_features=10, out_features=1)
 
@@ -35,6 +37,10 @@ class MyModule(nn.Module):
         x = self.relu(x)
 
         x = self.sell(x)
+
+        x = self.relu(x)
+
+        x = self.adapter(x)
 
         x = self.relu(x)
 
@@ -56,7 +62,7 @@ def main():
 
     optimizer = optim.Adam(model.parameters(), lr=0.01)  # creating the optimizer
 
-    x_optimizer = XOptimWrapper(module=model, optimizer=optimizer) # creating the SENN-compatible optimizer
+    x_optimizer = XOptimWrapper(module=model, optimizer=optimizer, max_params=int(1e6)) # creating the SENN-compatible optimizer with a limit of 100000 parameters
 
     criterion = nn.MSELoss()  # choosing the loss function
 
@@ -80,9 +86,11 @@ def main():
 
         if epoch % 10 == 0:
 
-            x_optimizer.layers_expand(expansion=7)  # expanding the expanding layers
+            x_optimizer.expand(expansion=7)  # expanding the expanding layers
 
             print("\nExpansion done!\n")
+
+            print(x_optimizer.model_size(human=True))  # showing the current size
 
 if __name__ == "__main__":
 

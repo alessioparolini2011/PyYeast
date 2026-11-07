@@ -57,8 +57,15 @@ class XOptimWrapper:
 
             raise OptimizerTypeError("Wrong argument: 'max_params' must be an integer!")
 
+        self.actual_size = self.model_size()
 
-    def step(self, expansion: int):
+        if max_params < self.actual_size:
+
+            raise OptimizerValueError("Wrong argument: 'max_params' cannot be lower than the current size of the model!")
+
+        self.max_params = max_params
+
+    def expand(self, expansion: int):
 
         """
         Expand the layers the optimizers manages
@@ -84,8 +91,12 @@ class XOptimWrapper:
 
                 layer_dict["weight"] = layer.weight
 
-                layer.expand(expansion=expansion*layer.exp_rate)
+                layer.expand(expansion=expansion)
 
+                if  self.model_size() > self.max_params:
+
+                    raise OptimizerValueError(f"ERROR: the numbers of parameters ({self.model_size()}) exceeds the limit: {self.max_params}")
+                
             self._update_dict()
 
         except ValueError as v:
