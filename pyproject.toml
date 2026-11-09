@@ -20,3 +20,8 @@ dependencies = [
 
 [project.scripts]
 yeast = "yeast.examples.demo:main"
+
+[dependency-groups]
+dev = [
+    "black>=26.10.1",
+]
