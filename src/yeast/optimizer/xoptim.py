@@ -5,6 +5,7 @@ In this file you can find resources I used to adapt torch.optim.Optimizer to PyY
 """
 
 from yeast.exceptions import XOptimizerError, OptimizerValueError, OptimizerTypeError
+from yeast.layers import XLinear
 
 from typing import Iterable, Any
 
@@ -23,7 +24,7 @@ class XOptimizer:
     def __init__(self, algorithm: type[Optimizer],
                  model: Module | Iterable[Module],
                  params: Iterable[Tensor],
-                 **kwargs: Any,):
+                 **kwargs: Any, ):
         """
         :param algorithm: the optimizer algorithm you choose for the optimizer. Use the same name you find on PyTorch (Adam, SGD...)
         :param model: the PyTorch nn.Module
@@ -39,9 +40,13 @@ class XOptimizer:
         elif isinstance(model, Iterable):
             self.modules = list(model)
             if not all(isinstance(m, Module) for m in self.modules):
-                raise OptimizerTypeError("Wrong argument: 'model' iterable must contain only PyTorch 'Modules' instance")
+                raise OptimizerTypeError(
+                    "Wrong argument: 'model' iterable must contain only PyTorch 'Modules' instance")
         else:
-            raise OptimizerTypeError("Wrong argument: 'model' must be a PyTorch 'Module' instance or an iterable of them")
+            raise OptimizerTypeError(
+                "Wrong argument: 'model' must be a PyTorch 'Module' instance or an iterable of them")
+
+        self.x_layers_list: list[XLinear] = []  # this list will contain
 
     def __getattr__(self, item: str) -> Any:
         """
@@ -50,3 +55,15 @@ class XOptimizer:
         :return: Any
         """
         return getattr(self.optimizer, item)
+
+    def _get_xlayers(self) -> list:
+        """
+        Gets all the expanding layers from the given modules
+        :return: a list of them
+        """
+        x_layers: list[XLinear] = []
+        for module in self.modules:
+            for l in module.parameters():
+                if isinstance(l, XLinear):
+                    x_layers.append(l)
+        return x_layers
