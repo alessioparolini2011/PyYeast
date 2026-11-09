@@ -133,7 +133,7 @@ model = nn.Module()
 
 optim = optim.Adam(params=model.parameters())
 
-x_optim_wrapper = optimizer.XOptimWrapper(module=model, optimizer=optim)
+x_optim_wrapper = optimizer.XOptimWrapper(module=model, optimizer=optim, max_params=1e7)
 ```
 
 There are two arguments an `XOptimWrapper` needs when it's created:
@@ -141,6 +141,8 @@ There are two arguments an `XOptimWrapper` needs when it's created:
 + `module: nn.Module`: the model, instance of nn.Module (it requires the entire module because it needs to get the expanding layers from it)
 
 + `optimizer: optim.Optimizer`: given the optimizer, every time the layers expand themselves, it updates the optimizer dict, **leaving old progress and adding only the blank spaces for new data**. All it's done automatically.
+
++ `max_params: int | float`: this value set a limit to the model size, so the expansion can't cause a memory saturation. It accepts both `float` and `int` so you can use exponential, but remember the number will be passed in an `int()` function!
 
 **Usage**
 

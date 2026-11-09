@@ -37,7 +37,7 @@ class XOptimWrapper:
     that accepts, avoiding errors, new parameters and their state
     """
 
-    def __init__(self, module:nn.Module, optimizer:Optimizer, max_params:int):
+    def __init__(self, module:nn.Module, optimizer:Optimizer, max_params:int | float):
 
         if not isinstance(module, nn.Module):
 
@@ -53,13 +53,17 @@ class XOptimWrapper:
 
         self.xl_list: list[LayersDict] = self._get_xlayers()
 
-        if not isinstance(max_params, int):
+        try:
 
-            raise OptimizerTypeError("Wrong argument: 'max_params' must be an integer!")
+            int_params = int(max_params)  # in this way it can accept also exponential, like 1e5
+
+        except:
+
+            raise OptimizerTypeError("Wrong argument: 'max_params' must be an integer or a float!")
 
         self.actual_size = self.model_size()
 
-        if max_params < self.actual_size:
+        if int_params < self.actual_size:
 
             raise OptimizerValueError("Wrong argument: 'max_params' cannot be lower than the current size of the model!")
 
