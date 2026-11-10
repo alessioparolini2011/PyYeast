@@ -6,6 +6,7 @@ In this file you can find resources I used to adapt torch.optim.Optimizer to PyY
 
 from yeast.exceptions import XOptimizerError, OptimizerValueError, OptimizerTypeError
 from yeast.layers import XLinear
+from ._optim_utils import _natural_gradient
 
 from typing import Iterable, Any
 
@@ -46,7 +47,8 @@ class XOptimizer:
             raise OptimizerTypeError(
                 "Wrong argument: 'model' must be a PyTorch 'Module' instance or an iterable of them")
 
-        self.x_layers_list: list[XLinear] = []  # this list will contain
+        self.xlayers_list: list[
+            XLinear] = self._get_xlayers()  # this list is for containing the references to the expanding layers
 
     def __getattr__(self, item: str) -> Any:
         """
@@ -56,7 +58,19 @@ class XOptimizer:
         """
         return getattr(self.optimizer, item)
 
-    def _get_xlayers(self) -> list:
+    def xstep(self) -> None:
+        """
+        This function is designed to expand the layers, using optimized algorithms,
+        also updating their dicts (like 'state_dict' or 'param_groups') so the PyTorch optimizer doesn't break
+        Also calls the classic .step() method from the original optimizer
+        :return: None
+        """
+        for layer in self.xlayers_list:
+            old_bias = layer.bias
+            old_weight = layer.weight  # saves the two old parameters (they're necessary for get the position in optimizer dicts)
+            naturals = _natural_gradient(layer=layer)
+
+    def _get_xlayers(self) -> list[XLinear]:
         """
         Gets all the expanding layers from the given modules
         :return: a list of them
