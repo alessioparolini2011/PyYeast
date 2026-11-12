@@ -29,7 +29,7 @@ class XAdapter(XLinear):
 
         super().__init__(in_features=in_features, out_features=out_features, exp_rate=exp_rate)
 
-        self.filter = XLinear(out_features=self.out_features) #auto-detect the input the first time.
+        self.filter = XLinear(in_features=self.out_features, out_features=self.out_features)
 
         self.filter.exp_rate = 0 # "exp_rate" is set to zero, so if the XOptimWrapper expand all the XLinear instance, the filter always keep his structure the same. I've done it after the creation to avoid expections
 
@@ -45,7 +45,7 @@ class XAdapter(XLinear):
 
              x = f.relu(x)
 
-             x = self.filter.forward(x)
+             x = self.filter(x)
 
              return x
 
