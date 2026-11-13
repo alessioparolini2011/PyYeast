@@ -193,31 +193,17 @@ class XOptimWrapper:
                     if p is old_bias or p is old_weight:
 
                         group["params"][i] = layer.bias if p is old_bias else layer.weight  # replaces the old parameter
-
                         new_param = group["params"][i]
-
                         if p in self.optimizer.state:  # and updates the parameter in the state_dict
-
                             old_state = self.optimizer.state[p]
-
                             new_state = {}  # creating the new state dict
-
                             for key, value in old_state.items(): # analyzing the parameter state dict
-
                                 if isinstance(value, torch.Tensor) and p.shape == value.shape:  # skip the values like "step", that aren't related to the parameter dimension
-
                                     new_dims = torch.zeros(new_param.shape, device= new_param.device, dtype=new_param.dtype)  # creating the zeros tensor with the new parameter dimension
-
                                     data = tuple(slice(0, dim) for dim in p.shape )  # get the current sizes of this value
-
                                     new_dims[data] = value  # put in the original place the old data, so they aren't lose
-
                                     new_state[key] = new_dims # replacing the value
-
                                 else:
-
                                     new_state[key] = value  # or keeping it identical
-
                             self.optimizer.state[new_param] = new_state  # updating the dict
-
                             del self.optimizer.state[p]  # and deleting the old one

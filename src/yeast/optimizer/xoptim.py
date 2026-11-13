@@ -46,9 +46,8 @@ class XOptimizer:
         else:
             raise OptimizerTypeError(
                 "Wrong argument: 'model' must be a PyTorch 'Module' instance or an iterable of them")
-        self.xlayers_list: list[XLinear] = self._get_xlayers()  # this list is for containing the references to the expanding layers
-        self._register_hooks()
-
+        self.xlayers_list: list[
+            XLinear] = self._get_xlayers()  # this list is for containing the references to the expanding layers
 
     def __getattr__(self, item: str) -> Any:
         """
@@ -69,20 +68,58 @@ class XOptimizer:
             old_bias = layer.bias
             old_weight = layer.weight  # saves the two old parameters (they're necessary for get the position in optimizer dicts)
             gss = _gss(layer=layer)  # get the list of the sum of gradients square
-            if gss.numel() < 2: # if there's only a neuron, skips
+            if gss.numel() < 2:  # if there's only a neuron, skips
                 continue
             max_idx = torch.argmax(gss).item()  # get the index of the highest sum
             w_template = layer.weight[max_idx]
-            b_template = layer.bias[max_idx : max_idx + 1]  # getting the weight and bias (I used slicing to keep 1D) template (the ones with the highest gradients square sum)
+            b_template = layer.bias[
+                max_idx: max_idx + 1]  # getting the weight and bias (I used slicing to keep 1D) template (the ones with the highest gradients square sum)
             std, mean = torch.std_mean(gss, correction=0)
             max_gss = torch.max(gss)
-            z_score = round(((max_gss - mean ) / (std + 1e-8)).item()) # calculating the z-score, it knows how much the highest value deviates from the mean. It's rounded, so it can be used for the expansion
+            z_score = round(((max_gss - mean) / (
+                        std + 1e-8)).item())  # calculating the z-score, it knows how much the highest value deviates from the mean. It's rounded, so it can be used for the expansion
             if layer.exp_rate > 0 and z_score >= 2:  # the first condition avoid filter layers, the second avoids tiny useless expansions
                 layer.expand(expansion=z_score, w_template=w_template, b_template=b_template)
-                self._sync_param(old_weight, layer.weight)
-                self._sync_param(old_bias, layer.bias)
-
+                self._sync_params(old_weight, layer.weight)
+                self._sync_params(old_bias, layer.bias)
         self.optimizer.step()
+
+    @staticmethod
+    def final_forward(model: Module, in_features: int)->None:
+        """
+        This function is essential to synchronize the parameters, calling _input_expanding a last time.
+        :param model: the model
+        :param in_features: the number of in_features of the model
+        :return: none
+        """
+        with torch.no_grad():
+            dummy_input = torch.zeros(1, in_features, device=next(model.parameters()).device)
+            model(dummy_input)
+
+    def _sync_params(self, old_p: Tensor, new_p: Tensor) -> None:
+        """
+        This function synchronize the PyTorch optimizer dict, adding the blank space for new parameters data
+        :param old_p: the old parameter (to access the dict)
+        :param new_p: the new one
+        :return: none
+        """
+        for g in self.optimizer.param_groups:
+            for i, p in enumerate(g["params"]):
+                if p is old_p:
+                    g["params"][i] = new_p  # replaces the old parameter
+                    if p in self.optimizer.state:  # and updates it in the state dict
+                        old_state = self.optimizer.state[p]
+                        new_state = {}
+                        for key, value in old_state.items():
+                            if isinstance(value, Tensor) and value.size() == p.size():  # in this way, it considers only data about the size of the parameter, the ones is interested in expanding
+                                new_data = torch.zeros_like(new_p)  # creating the new value with new size
+                                old_data_position = tuple(slice(0, dim) for dim in p.shape)
+                                new_data[old_data_position] = value  # use the slice to put the old data in their previous place
+                                new_state[key] = new_data  # and updates the new dict
+                            else:
+                                new_state[key] = value  # if the value isn't related to the size, is duplicated
+                        self.optimizer.state[new_p] = new_state  # creates the new dict, keeping previous progresses
+                        del self.optimizer.state[p]  # delete the old one
 
     def _get_xlayers(self) -> list[XLinear]:
         """
@@ -90,43 +127,8 @@ class XOptimizer:
         :return: a list of them
         """
         x_layers: list[XLinear] = []
-        for module in self.modules:
+        for module in self.modules:  # inspects the modules
             for l in module.modules():
-                if isinstance(l, XLinear):
+                if isinstance(l, XLinear):  # and gets expanding layers
                     x_layers.append(l)
         return x_layers
-
-    def _register_hooks(self) -> None:
-        for layer in self.xlayers_list:
-            def pre_hook(mod: XLinear, inputs: tuple[Tensor, ...]) -> None:
-                if not inputs:
-                    return
-                x = inputs[0]
-                if x.size(1) > mod.in_features:
-                    old_weight = mod.weight
-                    mod._input_adapting(x)
-                    if old_weight is not mod.weight:
-                        self._sync_param(old_weight, mod.weight)
-
-            layer.register_forward_pre_hook(pre_hook)
-
-    def _sync_param(self, old_p: Tensor, new_p: Tensor) -> None:
-        for group in self.optimizer.param_groups:
-            for i, p in enumerate(group["params"]):
-                if p is old_p:
-                    group["params"][i] = new_p
-                    if old_p in self.optimizer.state:
-                        old_state = self.optimizer.state[old_p]
-                        new_state = {}
-                        for key, value in old_state.items():
-                            if isinstance(value, torch.Tensor) and old_p.shape == value.shape:
-                                new_dims = torch.zeros(new_p.shape, device=new_p.device, dtype=new_p.dtype)
-                                data = tuple(slice(0, dim) for dim in old_p.shape)
-                                new_dims[data] = value
-                                new_state[key] = new_dims
-                            else:
-                                new_state[key] = value
-                        self.optimizer.state[new_p] = new_state
-                        del self.optimizer.state[old_p]
-                    return
-
