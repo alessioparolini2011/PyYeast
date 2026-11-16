@@ -3,6 +3,9 @@ xoptim.py
 Authors: Alessio Parolini
 In this file you can find resources I used to adapt torch.optim.Optimizer to PyYeast componentes
 """
+
+__all__ = ["XOptimizer"]
+
 import torch
 
 from yeast.exceptions import OptimizerTypeError
