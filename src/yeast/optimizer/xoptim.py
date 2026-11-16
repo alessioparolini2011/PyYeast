@@ -26,16 +26,19 @@ class XOptimizer:
     def __init__(self, algorithm: type[Optimizer],
                  model: Module | Iterable[Module],
                  params: Iterable[Tensor],
+                 max_params: int,
                  **kwargs: Any, ):
         """
         :param algorithm: the optimizer algorithm you choose for the optimizer. Use the same name you find on PyTorch (Adam, SGD...)
         :param model: the PyTorch nn.Module
         :param params: the argument params is the same you'd pass to a classic optimizer
+        :param max_params: max total parameters allowed, same limit as XOptimWrapper
         :param kwargs: the others arguments for the optimizer you choose
         """
         if not issubclass(algorithm, Optimizer):
             raise OptimizerTypeError("Wrong argument: 'algorithm' must be a subclass of PyTorch 'Optimizer'!")
         self.optimizer = algorithm(params=params, **kwargs)  # creates the classic optimizer
+        self.max_params = max_params
         if isinstance(model, Module):
             self.modules = [model]
         elif isinstance(model, Iterable):
@@ -65,6 +68,7 @@ class XOptimizer:
         :return: None
         """
         for layer in self.xlayers_list:
+            self._reconcile_layer(layer)
             old_bias = layer.bias
             old_weight = layer.weight  # saves the two old parameters (they're necessary for get the position in optimizer dicts)
             gss = _gss(layer=layer)  # get the list of the sum of gradients square
@@ -79,6 +83,11 @@ class XOptimizer:
             z_score = round(((max_gss - mean) / (
                         std + 1e-8)).item())  # calculating the z-score, it knows how much the highest value deviates from the mean. It's rounded, so it can be used for the expansion
             if layer.exp_rate > 0 and z_score >= 2:  # the first condition avoid filter layers, the second avoids tiny useless expansions
+                # each new neuron adds in_features weights + 1 bias, so we check the real cost before expanding
+                new_neurons = z_score * layer.exp_rate
+                cost = new_neurons * (layer.in_features + 1)
+                if self._total_params() + cost > self.max_params:
+                    continue
                 layer.expand(expansion=z_score, w_template=w_template, b_template=b_template)
                 self._sync_params(old_weight, layer.weight)
                 self._sync_params(old_bias, layer.bias)
@@ -95,6 +104,54 @@ class XOptimizer:
         with torch.no_grad():
             dummy_input = torch.zeros(1, in_features, device=next(model.parameters()).device)
             model(dummy_input)
+
+    def _reconcile_layer(self, layer: XLinear) -> None:
+        """
+        Puts the optimizer back on the current weight if _input_adapting replaced it.
+        :param layer: the layer to check
+        :return: none
+        """
+        current = [p for g in self.optimizer.param_groups for p in g["params"]]
+        # _input_adapting creates a new Parameter, so the optimizer can still hold the old one
+        if not any(layer.weight is p for p in current):
+            old = self._find_prefix(layer.weight, current)
+            if old is not None:
+                self._sync_params(old, layer.weight)
+        if not any(layer.bias is p for p in current):
+            old_b = self._find_prefix(layer.bias, current)
+            if old_b is not None:
+                self._sync_params(old_b, layer.bias)
+
+    @staticmethod
+    def _find_prefix(new_p: Tensor, candidates) -> Tensor | None:
+        """
+        Finds the old parameter that is a prefix of the new one.
+        :param new_p: the new, bigger parameter
+        :param candidates: the parameters currently in the optimizer
+        :return: the old parameter, or None
+        """
+        best = None
+        best_size = -1
+        for old in candidates:
+            if old.dim() != new_p.dim():
+                continue
+            if any(o > n for o, n in zip(old.shape, new_p.shape)):
+                continue
+            # _input_adapting does cat, so the old data stays at the start of the new weight
+            slices = tuple(slice(0, s) for s in old.shape)
+            if torch.equal(old, new_p[slices]):
+                # if two layers match, keep the biggest one, it is the closest to the new weight
+                if old.numel() > best_size:
+                    best = old
+                    best_size = old.numel()
+        return best
+
+    def _total_params(self) -> int:
+        """
+        Counts the total parameters currently in the optimizer.
+        :return: total number of parameters
+        """
+        return sum(p.numel() for g in self.optimizer.param_groups for p in g["params"])
 
     def _sync_params(self, old_p: Tensor, new_p: Tensor) -> None:
         """

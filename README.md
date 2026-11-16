@@ -37,6 +37,8 @@ The `XLinear` class provides an easy and quick way to create and use a SELL (Sel
 + It can expand its structure vertically, increasing **its neurons number**
 + It has got an input detecting function, so **it can expand its number of weights at run-time to adapt for a new input size**, due to a previous layer expansion 
 + Every time it creates new weights (both vertically or inside a single neuron), it initializes them at **0** (or with tiny numbers), avoiding loss spikes in the firsts epochs.
++ With `exp_rate`, **every layer can grow in a different way**: a layer with a higher `exp_rate` grows faster than the others, so you can control which part of the model expands more
++ You can omit `in_features`: **the layer detects it automatically on the first forward**, so you don't need to count sizes by hand
 
 **Initializing**
 
@@ -88,6 +90,8 @@ These are the 2 attributes an XLinear instance has:
 
 + In this way, **you can add expanding layers in static neural networks**, because the *Filter Layer* takes care, **all by itself** (you don't need to do anything) to give to the next layer, a static one, **always the same size tensor**
 
++ **No manual reshaping:** you can put a classic `nn.Linear` after an `XAdapter` and it will never break, even if the adapter grows inside
+
 **Initializing**
 
 ```python
@@ -109,6 +113,9 @@ See [XLinear](#xlinear), it's the same
 ### yeast.optimizer
 
 #### XOptimWrapper
+
+>[!WARNING]
+> This resource is deprecated. Use [XOptimizer](#xoptimizer) instead. `XOptimWrapper` needs a manual expansion and a manual `step()`. `XOptimizer` does both automatically, with the same object.
 
 **Features**
 
@@ -160,16 +167,53 @@ print(x_optim_wrapper.model_size(human=True)) # OUTPUT EXAMPLE: 2.5T
 
 ```
 
-+ `layers_expansion(expansion: int)`: for every expanding layers in the module passed in the argument, it expands his structure, **like you calling `layer.expand(expansion=4)` for every expanding layer in the module**
++ `layers_expand(expansion: int)`: for every expanding layers in the module passed in the argument, it expands his structure, **like you calling `layer.expand(expansion=4)` for every expanding layer in the module**
 
 + `model_size(human: bool)`: return the number of parameters (understood as the individual weights and biases) of the model. With `human` as `True`, **returns the number as a more readable alphanumeric combination** (*2.3T*, *4B*...), else returns **the pure number** (*22345*, *123*...)
 
 >[!WARNING]
 > If you use `XOptimWrapper` you've still to do `loss.backward()`, `optimizer.step()`, `optimizer.zero_grad()` and all that stuff, **because the `XOptimWrapper` don't do it by itself**
 
----
+#### XOptimizer
 
-**If you want to some of these resources in action together**, take a look at the demonstration script [here](https://raw.githubusercontent.com/alessioparolini2011/PyYeast/refs/heads/master/src/yeast/examples/demo.py)
+**Features**
+
++ `XOptimizer` is a special version of PyTorch optimizers. In fact, **a normal optimizer cannot work with an expanding layer**, because the dicts of the parameters are set when the optimizer itself is created.
+
++ This class is built to solve this problem: you don't create the optimizer outside, and then you use a wrapper, **instead you create the PyTorch optimizer and the SENN-compatible version with the same object.**
+
++ It also manages the expansion of all the layers (that it detects by itself when it's created) of the model, **using the GSS of every neuron**. Every time it does a step, it checks if a layer needs to expand, and if yes, it expands it and **automatically updates the dicts of the parameters.**
+
++ **No reset, no lost progress:** when it expands a layer, it keeps the momentum of the old neurons exactly as it was, and the new neurons start with zero momentum. Nothing is restarted from scratch
+
++ **It skips what must not grow:** it skips the *Filter Layers* of the `XAdapter`, because they have `exp_rate = 0`, and it skips the layers with less than 2 neurons
+
+>[!WARNING]
+> If you're using a `XOptimizer` instance, be sure to use only it to expand the layers and to do the step. Don't call `optimizer.step()` by yourself, because `xstep()` already does it. Because if you expand a single layer manually, its parameters dicts won't be updated.
+
+**Initializing**
+
+```python
+
+from torch import nn, optim
+
+from yeast import optimizer
+
+model = nn.Sequential(
+    XLinear(in_features=10, out_features=16),
+    nn.ReLU(),
+    XLinear(in_features=16, out_features=1)
+)
+
+x_optimizer = optimizer.XOptimizer(algorithm=optim.Adam, model=model, params=model.parameters(), lr=0.01)
+
+```
+
+There are three arguments an `XOptimizer` needs when it's created, plus the ones of the classic optimizer:
+
++ `algorithm: type[Optimizer]`: the optimizer algorithm you choose for the optimizer. Use the same name you find on PyTorch (`Adam`, `SGD`...). It must be a subclass of PyTorch `Optimizer`.
+
++ `model: nn.Module | Iterable[nn.Module]`: the model, instance of nn.Module, or a list of them (it requires the entire module because it needs to get the expanding layers
 
 ## Quickstart
 
