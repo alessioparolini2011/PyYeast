@@ -1,3 +1,9 @@
 from yeast.exceptions.errors import *
 
-__all__ = ["SwellError", "XLayersError", "LayersTypeError", "LayersValueError", "XOptimizerError", "OptimizerValueError", "OptimizerTypeError"]
+__all__ = ["YeastException",
+           "XLayersError",
+           "XLayersTypeError",
+           "XLayersValueError",
+           "XOptimizerError",
+           "XOptimizerTypeError",
+           "XOptimizerValueError"]

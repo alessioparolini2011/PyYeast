@@ -2,60 +2,62 @@
 errors.py
 Authors: Alessio Parolini
 This file contains the customized Exception classes for the package.
+In this way, the user can receive a more precise analysis of the errors returned,
+understanding better what causes the error.
 """
 
-__all__ = ["SwellError", "XLayersError", "LayersTypeError", "LayersValueError", "XOptimizerError", "OptimizerValueError", "OptimizerTypeError"]
+__all__ = ["YeastException",
+           "XLayersError",
+           "XLayersTypeError",
+           "XLayersValueError",
+           "XOptimizerError",
+           "XOptimizerTypeError",
+           "XOptimizerValueError"]
 
-class SwellError(Exception):
 
+class YeastException(Exception):
     """
-    The default package exception
+    The default exception for the class, so the user can recognize immediately where the error comes from
     """
 
+    def __init__(self, message: str = ""):
+        """
+        This is a customized __init__, to format the exception with a default message
+        :param message: the specific phrase
+        """
+        full = f"PyYeast returned an error: {message} - See docs at: https://github.com/alessioparolini2011/PyYeast#readme"
+        super().__init__(full)  # show the error in the terminal
+
+
+# LAYERS ERRORS
+
+class XLayersError(YeastException):
+    """The default error for layers resources"""
     pass
 
-# --- LAYERS ERRORS ---
 
-class XLayersError(SwellError):
-
-    """
-    The default error for layers resources
-    """
-
+class XLayersTypeError(XLayersError):
+    """The exception for wrong types in layers"""
     pass
 
-class LayersTypeError(XLayersError, TypeError):
 
-    """
-    The exception for wrong types in layers
-    """
-
+class XLayersValueError(XLayersError):
+    """The exception for wrong values in layers"""
     pass
 
-class LayersValueError(XLayersError, ValueError):
 
-    """
-    The exception for wrong values in layers
-    """
+# OPTIMIZERS ERRORS
 
+class XOptimizerError(YeastException):
+    """The base exception for optimizers"""
     pass
 
-class XOptimizerError(SwellError):
 
-    """
-    The base exception for optimizers
-    """
-
-class OptimizerTypeError(XOptimizerError, TypeError):
-
-    """
-    The exception for wrong types in optimizers
-    """
-
+class XOptimizerTypeError(XOptimizerError):
+    """The exception for wrong types in optimizers"""
     pass
 
-class OptimizerValueError(XOptimizerError, ValueError):
 
-    """
-    The exception for wrong values in optimizers
-    """
+class XOptimizerValueError(XOptimizerError):
+    """The exception for wrong values in optimizers"""
+    pass
