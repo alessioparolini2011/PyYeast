@@ -15,7 +15,8 @@ authors = [
 description = "Just as yeast makes bread rise, PyYeast makes your neural network grow! PyYeast is a PyTorch-based Python library designed to build and manage Self-Expanding Neural Networks (SENN), enabling your AI models to dynamically restructure during training and boost their performance!"
 readme = "README.md"
 dependencies = [
-    "torch==2.14.1"
+    "torch==2.14.1",
+    "numpy="
 ]
 
 [project.scripts]

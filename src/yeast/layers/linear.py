@@ -22,16 +22,18 @@ class XLinear(nn.Module):
     both for user instructions and for the expansion of previous layers
     """
 
-    def __init__(self, out_features: int, in_features: int | None = None, exp_rate: int = 1, ):
+    def __init__(self, out_features: int, in_features:int, exp_rate: int = 1, ):
         """
         :param in_features: the number of starting inputs (with None it detects it by itself)
         :param out_features: the number of out features (this must be entered!)
         :param exp_rate: how much is the extension increased (for the optimizer)
         """
         super().__init__()
-        if in_features is not None and not isinstance(in_features, int):
+        if in_features is None:
+            raise LayersValueError("Missing argument: 'in_features' cannot be None!")
+        if in_features is not isinstance(in_features, int):
             raise LayersTypeError("Wrong argument: 'in_features' must be an integer")
-        self.in_features = in_features if in_features is not None else 0
+        self.in_features = in_features
         if out_features is None:
             raise LayersValueError("Missing argument: 'out_features' cannot be None!")
         if not isinstance(out_features, int):
@@ -44,7 +46,7 @@ class XLinear(nn.Module):
         self.exp_rate = exp_rate
         self.weight = nn.Parameter(data=(torch.randn(self.out_features, self.in_features)))
         self.bias = nn.Parameter(data=(torch.randn(self.out_features)))
-        self._last_expansion = 0
+        
 
     def expand(self, expansion: int,
                w_template: torch.Tensor | None = None,
@@ -62,7 +64,7 @@ class XLinear(nn.Module):
         if not expansion > 0:
             raise LayersValueError("Wrong argument: 'expansion' must be higher than 0!")
         try:
-            self._last_expansion = expansion * self.exp_rate
+            _last_expansion = expansion * self.exp_rate
             if w_template is not None:
                 if not isinstance(w_template, torch.Tensor):
                     raise LayersTypeError("Wrong argument: 'w_template' must be a torch.Tensor instance!")
@@ -70,10 +72,11 @@ class XLinear(nn.Module):
                     raise LayersValueError(
                         "Error! The size of 'w_template' is different by the input features of the layer!")
                 new_weight = w_template.to(device=self.weight.device,
-                                           dtype=self.weight.dtype).unsqueeze(0).repeat(self._last_expansion, 1)  # creating new weights from the template
+                                           dtype=self.weight.dtype).unsqueeze(0).repeat(_last_expansion,
+                                                                                        1)  # creating new weights from the template
                 new_weight = new_weight + torch.randn_like(new_weight) * 1e-2  # and adding some noise
             else:
-                new_weight = torch.rand(self._last_expansion,
+                new_weight = torch.rand(_last_expansion,
                                         self.in_features,
                                         device=self.weight.device,
                                         dtype=self.weight.dtype) * 1e-2
@@ -84,10 +87,10 @@ class XLinear(nn.Module):
                     raise LayersValueError(
                         "Error! The size of 'b_template' is different by the output features of the layer!")
                 new_bias = b_template.to(device=self.bias.device,
-                                         dtype=self.bias.dtype).repeat(self._last_expansion)  # creating new biases
+                                         dtype=self.bias.dtype).repeat(_last_expansion)  # creating new biases
                 new_bias = new_bias + torch.randn_like(new_bias) * 1e-2  # and adding some noise
             else:
-                new_bias = torch.rand(self._last_expansion,
+                new_bias = torch.rand(_last_expansion,
                                       device=self.bias.device,
                                       dtype=self.bias.dtype) * 1e-2
             self.weight = nn.Parameter(data=torch.cat([self.weight, new_weight],
@@ -113,7 +116,8 @@ class XLinear(nn.Module):
         extra_size = x_size - self.in_features  # check if are more than the previous epoch
         if extra_size == 0:  # if it's not return
             return
-        new_param = torch.randn(self.weight.size(0), extra_size, device=self.weight.device, dtype=self.weight.dtype) * 1e-2
+        new_param = torch.randn(self.weight.size(0), extra_size, device=self.weight.device,
+                                dtype=self.weight.dtype) * 1e-2
         self.weight = nn.Parameter(torch.cat([self.weight, new_param], dim=1))  # add new weight
         self.in_features = self.weight.size(1)  # update the in_features value
 
@@ -127,7 +131,6 @@ class XLinear(nn.Module):
         self._input_adapting(x)
         try:
             x = f.linear(x, self.weight, self.bias)
-            self._last_expansion = 0
             return x
         except ValueError as v:
             raise LayersValueError(f"Value error during a XLayer forward function:\n{v}")
