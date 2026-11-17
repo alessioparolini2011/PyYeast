@@ -7,9 +7,9 @@ understanding better what causes the error.
 """
 
 __all__ = ["YeastException",
-           "XLayersError",
-           "XLayersTypeError",
-           "XLayersValueError",
+           "XNetError",
+           "XNetTypeError",
+           "XNetValueError",
            "XOptimizerError",
            "XOptimizerTypeError",
            "XOptimizerValueError"]
@@ -31,17 +31,17 @@ class YeastException(Exception):
 
 # LAYERS ERRORS
 
-class XLayersError(YeastException):
+class XNetError(YeastException):
     """The default error for layers resources"""
     pass
 
 
-class XLayersTypeError(XLayersError):
+class XNetTypeError(XNetError):
     """The exception for wrong types in layers"""
     pass
 
 
-class XLayersValueError(XLayersError):
+class XNetValueError(XNetError):
     """The exception for wrong values in layers"""
     pass
 

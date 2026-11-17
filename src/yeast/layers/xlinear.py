@@ -11,7 +11,7 @@ import torch
 from torch import nn
 from torch.nn import functional as f
 
-from yeast.exceptions import XLayersError, XLayersTypeError, XLayersValueError
+from yeast.exceptions import XNetError, XNetTypeError, XNetValueError
 
 class XLinear(nn.Module):
     """
@@ -31,19 +31,25 @@ class XLinear(nn.Module):
         """
         super().__init__()
         if in_features is None:
-            raise XLayersValueError("Missing argument: 'in_features' cannot be None!")
+            raise XNetValueError("Missing argument: 'in_features' cannot be None!")
         if not isinstance(in_features, int):
-            raise XLayersTypeError("Wrong argument: 'in_features' must be an integer")
+            raise XNetTypeError(f"Wrong argument! 'in_features' must be an integer! You've instead set it as a {type(in_features).__name__}")
+        if in_features <= 0:
+            raise XNetValueError(f"Wrong argument value! 'in_features' must be higher than 0! You've instead set it as {in_features}")
         self.in_features = in_features
         if out_features is None:
-            raise XLayersValueError("Missing argument: 'out_features' cannot be None!")
+            raise XNetValueError("Missing argument: 'out_features' cannot be None!")
         if not isinstance(out_features, int):
-            raise XLayersTypeError("Wrong argument: 'out_features' must be a integer!")
+            raise XNetTypeError(f"Wrong argument! 'out_features' must be an integer! You've instead set it as a {type(out_features).__name__}")
+        if out_features <= 0:
+            raise XNetValueError(f"Wrong argument value! 'out_features' must be higher than 0! You've instead set it as {out_features}")
         self.out_features = out_features
+        if exp_rate is None:
+            raise XNetValueError("Missing argument: 'exp_rate' cannot be None!")
         if not isinstance(exp_rate, int):
-            raise XLayersTypeError("Wrong argument: 'exp_rate' must be an integer!")
+            raise XNetTypeError(f"Wrong argument! 'exp_rate' must be an integer! You've instead set it as a {type(exp_rate).__name__}")
         if exp_rate <= 0:
-            raise XLayersValueError("Wrong value: 'exp_rate' must be higher than zero!")
+            raise XNetValueError(f"Wrong argument value! 'exp_rate' must be higher than 0! You've instead set it as {exp_rate}")
         self.exp_rate = exp_rate
         self.weight = nn.Parameter(data=(torch.randn(self.out_features, self.in_features)))
         self.bias = nn.Parameter(data=(torch.randn(self.out_features)))
@@ -58,7 +64,23 @@ class XLinear(nn.Module):
         :param bias_template: the bias template
         :return: none
         """
+        if expansion is None:
+            raise XNetValueError("Missing argument: 'expansion' cannot be None!")
         if not isinstance(expansion, int):
-            raise XLayersTypeError(f"Wrong argument! 'expansion' must be an integer! You instead set it as a {type(expansion).__name__}")
+            raise XNetTypeError(f"Wrong argument! 'expansion' must be an integer! You've instead set it as a {type(expansion).__name__}")
         if expansion <= 0:
-            raise XLayersValueError(f"Wrong argument value! 'expansion' must be higher than 0! You instead set it as {expansion}")
+            raise XNetValueError(f"Wrong argument value! 'expansion' must be higher than 0! You've instead set it as {expansion}")
+        _last_expansion = expansion * self.exp_rate  # how much expand
+        if weight_template is not None:  # I'm doing here the checks because I need more operation than the classic "if ... raise"
+            if not isinstance(weight_template, torch.Tensor):
+                raise XNetTypeError("Wrong argument: 'w_template' must be a torch.Tensor instance!")
+            if weight_template.size() != (self.in_features,):
+                raise XNetValueError("Error! The size of 'w_template' is different by the input features of the layer!")
+            new_weight = weight_template.to(device=self.weight.device,
+                                       dtype=self.weight.dtype).unsqueeze(0).repeat(_last_expansion,1)  # creating new weights from the template
+            new_weight = new_weight + torch.randn_like(new_weight) * 1e-2  # and adding some noise
+        else:
+            new_weight = torch.rand(_last_expansion,
+                                    self.in_features,
+                                    device=self.weight.device,
+                                    dtype=self.weight.dtype) * 1e-2

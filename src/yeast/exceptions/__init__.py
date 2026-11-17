@@ -1,9 +1,9 @@
 from yeast.exceptions.errors import *
 
 __all__ = ["YeastException",
-           "XLayersError",
-           "XLayersTypeError",
-           "XLayersValueError",
+           "XNetError",
+           "XNetTypeError",
+           "XNetValueError",
            "XOptimizerError",
            "XOptimizerTypeError",
            "XOptimizerValueError"]
