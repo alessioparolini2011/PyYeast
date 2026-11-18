@@ -7,12 +7,10 @@ understanding better what causes the error.
 """
 
 __all__ = ["YeastException",
-           "XNetError",
-           "XNetTypeError",
-           "XNetValueError",
-           "XOptimizerError",
-           "XOptimizerTypeError",
-           "XOptimizerValueError"]
+           "YeastTypeError",
+           "YeastValueError",
+           "YeastRuntimeError"
+           ]
 
 
 class YeastException(Exception):
@@ -29,35 +27,16 @@ class YeastException(Exception):
         super().__init__(full)  # show the error in the terminal
 
 
-# LAYERS ERRORS
+# SPECIFIC EXCEPTIONS
 
-class XNetError(YeastException):
-    """The default error for layers resources"""
+class YeastTypeError(YeastException, TypeError):
+    """Type error for PyYeast"""
     pass
 
-
-class XNetTypeError(XNetError):
-    """The exception for wrong types in layers"""
+class YeastValueError(YeastException, ValueError):
+    """Value error for PyYeast"""
     pass
 
-
-class XNetValueError(XNetError):
-    """The exception for wrong values in layers"""
-    pass
-
-
-# OPTIMIZERS ERRORS
-
-class XOptimizerError(YeastException):
-    """The base exception for optimizers"""
-    pass
-
-
-class XOptimizerTypeError(XOptimizerError):
-    """The exception for wrong types in optimizers"""
-    pass
-
-
-class XOptimizerValueError(XOptimizerError):
-    """The exception for wrong values in optimizers"""
+class YeastRuntimeError(YeastException, RuntimeError):
+    """Runtime error for PyYeast"""
     pass
