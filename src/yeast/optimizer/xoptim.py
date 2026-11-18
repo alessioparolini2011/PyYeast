@@ -8,7 +8,7 @@ __all__ = ["XOptimizer"]
 
 import torch
 
-from yeast.exceptions import OptimizerTypeError
+from yeast.exceptions import YeastTypeError
 from yeast.layers import XLinear
 from ._optim_utils import _gss
 
@@ -39,7 +39,7 @@ class XOptimizer:
         :param kwargs: the others arguments for the optimizer you choose
         """
         if not issubclass(algorithm, Optimizer):
-            raise OptimizerTypeError("Wrong argument: 'algorithm' must be a subclass of PyTorch 'Optimizer'!")
+            raise YeastTypeError("Wrong argument: 'algorithm' must be a subclass of PyTorch 'Optimizer'!")
         self.optimizer = algorithm(params=params, **kwargs)  # creates the classic optimizer
         self.max_params = max_params
         if isinstance(model, Module):
@@ -47,10 +47,10 @@ class XOptimizer:
         elif isinstance(model, Iterable):
             self.modules = list(model)
             if not all(isinstance(m, Module) for m in self.modules):
-                raise OptimizerTypeError(
+                raise YeastTypeError(
                     "Wrong argument: 'model' iterable must contain only PyTorch 'Modules' instance")
         else:
-            raise OptimizerTypeError(
+            raise YeastTypeError(
                 "Wrong argument: 'model' must be a PyTorch 'Module' instance or an iterable of them")
         self.xlayers_list: list[
             XLinear] = self._get_xlayers()  # this list is for containing the references to the expanding layers

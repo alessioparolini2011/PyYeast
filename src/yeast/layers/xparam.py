@@ -10,7 +10,7 @@ __all__ = ["XParameter"]
 import torch
 from torch import nn, Tensor
 
-from yeast.exceptions import XNetError, XNetTypeError, XNetValueError
+from yeast.exceptions import YeastException, YeastTypeError, YeastValueError, YeastRuntimeError
 
 
 class XParameter(nn.Parameter):
@@ -36,7 +36,7 @@ class XParameter(nn.Parameter):
         :return: none
         """
         if not isinstance(parameters, torch.Tensor):
-            raise XNetTypeError(f"Wrong argument: 'new_params' must be a PyTorch torch.Tensor instance! You've instead set it as a {type(new_params).__name__}")
+            raise TypeError(f"Wrong argument: 'new_params' must be a PyTorch torch.Tensor instance! You've instead set it as a {type(new_params).__name__}")
         if parameters.size(0) !=  self.data.size(0):
-            raise XNetValueError(f"Wrong argument: 'new_params' size isn't compatible with the actual param one!")
+            raise ValueError(f"Wrong argument: 'new_params' size isn't compatible with the actual param one!")
         self.data = torch.cat([self.data, parameters], dim=1)

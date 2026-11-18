@@ -12,7 +12,7 @@ from torch import nn
 
 from torch.nn import functional as f
 
-from yeast.exceptions import XNetError, XNetValueError, XNetTypeError
+from yeast.exceptions import YeastException, XNetValueError, YeastTypeError
 
 
 class XLinear(nn.Module):
@@ -32,15 +32,15 @@ class XLinear(nn.Module):
         if in_features is None:
             raise XNetValueError("Missing argument: 'in_features' cannot be None!")
         if in_features is not isinstance(in_features, int):
-            raise XNetTypeError("Wrong argument: 'in_features' must be an integer")
+            raise YeastTypeError("Wrong argument: 'in_features' must be an integer")
         self.in_features = in_features
         if out_features is None:
             raise XNetValueError("Missing argument: 'out_features' cannot be None!")
         if not isinstance(out_features, int):
-            raise XNetTypeError("Wrong argument: 'out_features' must be a integer!")
+            raise YeastTypeError("Wrong argument: 'out_features' must be a integer!")
         self.out_features = out_features
         if not isinstance(exp_rate, int):
-            raise XNetTypeError("Wrong argument: 'exp_rate' must be an integer!")
+            raise YeastTypeError("Wrong argument: 'exp_rate' must be an integer!")
         if exp_rate <= 0:
             raise XNetValueError("Wrong value: 'exp_rate' must be higher than zero!")
         self.exp_rate = exp_rate
@@ -60,14 +60,14 @@ class XLinear(nn.Module):
         :return: none
         """
         if not isinstance(expansion, int):
-            raise XNetTypeError("Wrong argument: 'expansion' must be an integer!")
+            raise YeastTypeError("Wrong argument: 'expansion' must be an integer!")
         if not expansion > 0:
             raise XNetValueError("Wrong argument: 'expansion' must be higher than 0!")
         try:
             _last_expansion = expansion * self.exp_rate
             if w_template is not None:
                 if not isinstance(w_template, torch.Tensor):
-                    raise XNetTypeError("Wrong argument: 'w_template' must be a torch.Tensor instance!")
+                    raise YeastTypeError("Wrong argument: 'w_template' must be a torch.Tensor instance!")
                 if w_template.size() != (self.in_features,):
                     raise XNetValueError(
                         "Error! The size of 'w_template' is different by the input features of the layer!")
@@ -82,7 +82,7 @@ class XLinear(nn.Module):
                                         dtype=self.weight.dtype) * 1e-2
             if b_template is not None:
                 if not isinstance(b_template, torch.Tensor):
-                    raise XNetTypeError("Wrong argument: 'b_template' must be a torch.Tensor instance!")
+                    raise YeastTypeError("Wrong argument: 'b_template' must be a torch.Tensor instance!")
                 if b_template.size() != (1,):
                     raise XNetValueError(
                         "Error! The size of 'b_template' is different by the output features of the layer!")
@@ -101,9 +101,9 @@ class XLinear(nn.Module):
         except ValueError as v:
             raise XNetValueError(f"Value error during a XLayer expansion:\n{v}")
         except TypeError as t:
-            raise XNetTypeError(f"Type error during a XLayer expansion:\n{t}")
+            raise YeastTypeError(f"Type error during a XLayer expansion:\n{t}")
         except Exception as e:
-            raise XXNetError(f"Generic error during a XLayer expansion:\n{e}")
+            raise XYeastException(f"Generic error during a XLayer expansion:\n{e}")
 
     def _input_adapting(self, x) -> None:
         """
@@ -135,6 +135,6 @@ class XLinear(nn.Module):
         except ValueError as v:
             raise XNetValueError(f"Value error during a XLayer forward function:\n{v}")
         except TypeError as t:
-            raise XNetTypeError(f"Type error during a XLayer forward function:\n{t}")
+            raise YeastTypeError(f"Type error during a XLayer forward function:\n{t}")
         except Exception as e:
-            raise XNetError(f"Generic error during a XLayer forward function:\n{e}")
+            raise YeastException(f"Generic error during a XLayer forward function:\n{e}")

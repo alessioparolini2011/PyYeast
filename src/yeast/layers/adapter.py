@@ -12,7 +12,7 @@ from torch.nn import functional as f
 
 from .linear import XLinear
 
-from yeast.exceptions import XNetError, XNetValueError, XNetTypeError
+from yeast.exceptions import YeastException, XNetValueError, YeastTypeError
 
 class XAdapter(XLinear):
 
@@ -55,8 +55,8 @@ class XAdapter(XLinear):
 
         except TypeError as t:
 
-            raise XNetTypeError(f"Type error during a XLayer forward function:\n{t}")
+            raise YeastTypeError(f"Type error during a XLayer forward function:\n{t}")
 
         except Exception as e:
 
-            raise XNetError(f"Generic error during a XLayer forward function:\n{e}")
+            raise YeastException(f"Generic error during a XLayer forward function:\n{e}")
