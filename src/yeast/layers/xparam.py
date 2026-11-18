@@ -4,6 +4,9 @@ Authors: Alessio Parolini
 This file contains the XParameter class, a subclass of PyTorch nn.Parameter that can grow without changing its identity.
 It updates .data in place, so the optimizer keeps tracking the same object during expansion.
 """
+
+__all__ = ["XParameter"]
+
 import torch
 from torch import nn, Tensor
 
@@ -18,7 +21,7 @@ class XParameter(nn.Parameter):
     """
     def __init__(self,
                  data: Tensor,
-                 requires_grad: bool,):
+                 requires_grad: bool = True,):
         """
         :param data: the default argument for nn.Parameter
         :param requires_grad: the default argument for nn.Parameter
