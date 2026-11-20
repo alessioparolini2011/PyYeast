@@ -12,51 +12,25 @@ from torch.nn import functional as f
 
 from .linear import XLinear
 
-from yeast.exceptions import YeastException, XNetValueError, YeastTypeError
 
 class XAdapter(XLinear):
-
     """
     This class is designed to create XLinear layers that can be inserted in a classic NN without input sizes errors.
     For ensure this, the XAdapter layer has a second "filter" XLinear layer that keep the output identical during all the training
     """
 
-    def __init__(self, in_features: int | None, out_features:int, exp_rate:int = 1):
-
+    def __init__(self, in_features: int, out_features: int, exp_rate: int = 1):
         """
         The passed arguments are the same for XLinear
         """
-
         super().__init__(in_features=in_features, out_features=out_features, exp_rate=exp_rate)
-
         self.filter = XLinear(in_features=self.out_features, out_features=self.out_features)
-
-        self.filter.exp_rate = 0 # "exp_rate" is set to zero, so if the XOptimWrapper expand all the XLinear instance, the filter always keep his structure the same. I've done it after the creation to avoid expections
+        self.filter.exp_rate = 0  # "exp_rate" is set to zero, so if the XOptimWrapper expand all the XLinear instance, the filter always keep his structure the same. I've done it after the creation to avoid expections
 
     def forward(self, x):
-
         """
         It's the same of XLinear, only adds the ReLU in the middle and the filter layer
         """
-
-        try:
-
-             x = super().forward(x)
-
-             x = f.relu(x)
-
-             x = self.filter(x)
-
-             return x
-
-        except ValueError as v:
-
-            raise XNetValueError(f"Value error during a XLayer forward function:\n{v}")
-
-        except TypeError as t:
-
-            raise YeastTypeError(f"Type error during a XLayer forward function:\n{t}")
-
-        except Exception as e:
-
-            raise YeastException(f"Generic error during a XLayer forward function:\n{e}")
+        x = f.relu(super().forward(x))
+        x = self.filter(x)
+        return x

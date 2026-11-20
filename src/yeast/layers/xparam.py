@@ -36,7 +36,7 @@ class XParameter(nn.Parameter):
         :return: none
         """
         if not isinstance(parameters, torch.Tensor):
-            raise TypeError(f"Wrong argument: 'new_params' must be a PyTorch torch.Tensor instance! You've instead set it as a {type(new_params).__name__}")
+            raise TypeError(f"Wrong argument: 'new_params' must be a PyTorch torch.Tensor instance! You've instead set it as a {type(parameters.__name__)}")
         if parameters.size(0) !=  self.data.size(0):
             raise ValueError(f"Wrong argument: 'new_params' size isn't compatible with the actual param one!")
         self.data = torch.cat([self.data, parameters], dim=1)

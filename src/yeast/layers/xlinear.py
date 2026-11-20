@@ -50,7 +50,7 @@ class XLinear(nn.Module):
         self.exp_rate = exp_rate
         self.weight = XParameter(data=(torch.randn(self.out_features, self.in_features)))
         self.bias = XParameter(data=(torch.randn(self.out_features)))  # using the special variant of nn.Parameter for the parameters
-        self._last_expansion = None
+        self._last_expansion = 0
 
     def expand(self, expansion:int,
                weight_template: torch.Tensor | None,
@@ -62,8 +62,6 @@ class XLinear(nn.Module):
         :param bias_template: the bias template
         :return: none
         """
-        if self._last_expansion:
-            raise YeastRuntimeError("An expansion has already been done, you can't do it twice!")
         if not isinstance(expansion, int):
             raise TypeError(f"'expansion' must be an integer, got {type(expansion).__name__}")
         if expansion <= 0:
@@ -93,4 +91,31 @@ class XLinear(nn.Module):
             new_bias = torch.cat([new_bias+noise, bias_template])
         self.weight.add_params(new_weight)
         self.bias.add_params(new_bias)
-        self._last_expansion = expansion
+        self._last_expansion += expansion
+
+    def _input_adapting(self, x) -> None:
+        """
+        This function is essential for the correct working of the expansion.
+        In fact, when a previous layer expands itself,
+        :param x: the input tensor
+        :return: None
+        """
+        x_size = x.size(1)  # get the number of inputs in the input tensor
+        extra_size = x_size - self.in_features  # check if are more than the previous epoch
+        if extra_size == 0:  # if it's not it returns
+            return
+        new_param = torch.zeros(self.weight.size(0), extra_size, device=self.weight.device,
+                                dtype=self.weight.dtype)
+        self.weight = nn.Parameter(torch.cat([self.weight, new_param], dim=1))  # add new weight
+        self.in_features = self.weight.size(1)  # update the in_features value
+
+    def forward(self, x):
+        """
+        Get the input and process it using the layer parameters.
+        It auto-adapts itself if the X isn't the same of the precedent epoch (for example: a previous layer expanded itself)
+        :param x: the input tensor
+        :return: the layer output
+        """
+        self._input_adapting(x)  # adapting to eventual expansion
+        x = f.linear(x, self.weight, self.bias)  # computing the data
+        return x
