@@ -11,7 +11,7 @@ import torch
 from torch import nn
 from torch.nn import functional as f
 
-from yeast.layers import XParameter
+from yeast.layers.xparam import XParameter
 
 from yeast.exceptions import YeastException, YeastValueError, YeastTypeError, YeastRuntimeError
 
@@ -80,17 +80,17 @@ class XLinear(nn.Module):
         if weight_template is None:  # it seems wrong, but in this way arguments check and operations are separated
             new_weight = torch.randn(expansion, self.in_features, device=self.weight.device, dtype=self.weight.dtype) * 1e-2
         else:
-            new_weight = weight_template.unsqueeze(0).repeat(expansion - 1, 1).to(device=self.weight.device, dtype=self.weight.dtype)  # creating new weight-1: one is the same as the template
+            new_weight = weight_template.repeat(expansion - 1, 1).to(device=self.weight.device, dtype=self.weight.dtype)  # creating new weight-1: one is the same as the template
             noise = torch.randn_like(new_weight) * 1e-2
-            new_weight = torch.cat([new_weight + noise, weight_template.unsqueeze(0)], dim=0)
+            new_weight = torch.cat([new_weight + noise, weight_template], dim=0)
         if bias_template is None:
             new_bias = torch.randn(expansion, device=self.bias.device, dtype=self.weight.dtype) * 1e-2
         else:
             new_bias = bias_template.repeat(expansion - 1).to(device=self.bias.device, dtype=self.bias.dtype)  # creating new bias, leaving a space for the identical one (like with weight)
             noise = torch.randn_like(new_bias) * 1e-2
-            new_bias = torch.cat([new_bias+noise, bias_template])
-        self.weight.add_params(new_weight)
-        self.bias.add_params(new_bias)
+            new_bias = torch.cat([new_bias+noise, bias_template], dim=0)
+        self.weight.add_params(new_weight, dim=0)
+        self.bias.add_params(new_bias, dim=0)
         self._last_expansion += expansion
 
     def _input_adapting(self, x) -> None:
@@ -104,9 +104,7 @@ class XLinear(nn.Module):
         extra_size = x_size - self.in_features  # check if are more than the previous epoch
         if extra_size == 0:  # if it's not it returns
             return
-        new_param = torch.zeros(self.weight.size(0), extra_size, device=self.weight.device,
-                                dtype=self.weight.dtype)
-        self.weight = nn.Parameter(torch.cat([self.weight, new_param], dim=1))  # add new weight
+        self.weight.add_params(parameters=torch.zeros(self.weight.size(0), extra_size), dim=1)
         self.in_features = self.weight.size(1)  # update the in_features value
 
     def forward(self, x):
