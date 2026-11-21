@@ -37,7 +37,7 @@ def main():
     PyPI: https://pypi.org/project/pyyeast/
     I hope I'll find useful my project! Remember to leave a star on GitHub!\n\n""")
     model = MyModule()  # creating the model
-    optimizer = XOptimizer(algorithm=optim.Adam, model=model, params=model.parameters(), max_params=int(2e5), lr=0.01)  # creating the optimizer
+    optimizer = XOptimizer(algorithm=optim.Adam, model=model, params=model.parameters(), max_params=int(2e7), wait_for_expansion=25, lr=0.01)  # creating the optimizer
     criterion = nn.MSELoss()  # choosing the loss function
     input_tensor = torch.rand(100, 1)  # creating input
     output_tensor = torch.sin(input_tensor)  # a simple math operation to find the output
@@ -73,7 +73,6 @@ def main():
     print(f"l2 (classic): {tuple(model.l2.weight.shape)}")
     total = sum(p.numel() for p in model.parameters())
     print(f"total params: {total} / max_params: {optimizer.max_params}")
-    XOptimizer.final_forward(model, in_features=1)  # final sync before saving
     total = sum(p.numel() for p in model.parameters())
     print(f"total params after final_forward: {total}")
 
