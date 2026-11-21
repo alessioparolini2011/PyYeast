@@ -4,13 +4,9 @@ Authors: Alessio Parolini
 Contains the class that groups ExpLinear and FilterLayer for an easier implementation
 """
 
-import torch
-
-from torch import nn
-
 from torch.nn import functional as f
 
-from .linear import XLinear
+from yeast.layers.xlinear import XLinear
 
 
 class XAdapter(XLinear):
