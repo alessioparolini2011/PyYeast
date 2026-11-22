@@ -31,10 +31,10 @@ def main():
     torch.manual_seed(42)  # keeping results reproducible
     print("""
     \n\nWelcome to PyYeast!
-    Package created by: Alessio Parolini (https://vercel.app)
+    Package created by: Alessio Parolini (https://my-code-portfolio-ten.vercel.app/)
     Root:
-    GitHub: https://github.com
-    PyPI: https://pypi.org
+    GitHub: https://github.com/alessioparolini2011/PyYeast
+    PyPI: https://pypi.org/project/pyyeast/
     I hope you'll find my project useful! Remember to leave a star on GitHub!\n\n""")
 
     model = MyModule()  # creating the model
