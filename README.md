@@ -43,7 +43,7 @@ The `XLinear` class provides an easy and quick way to create and use a SELL (Sel
 **Initializing**
 
 ```python
-from yeast.layers import XLinear
+from yeast.nn import XLinear
 
 sell = XLinear(in_features=10, out_features=22, exp_rate=2)
 
@@ -62,7 +62,7 @@ This is how create a XLinear object (it's pretty similar to a classic PyTorch Li
 ```python
 import torch
 
-from yeast.layers import XLinear
+from yeast.nn import XLinear
 
 sell = XLinear(in_features=10, out_features=22, exp_rate=2)
 
@@ -96,7 +96,7 @@ These are the 2 attributes an XLinear instance has:
 
 ```python
 
-from yeast.layers import XAdapter
+from yeast.nn import XAdapter
 
 adapter = XAdapter(in_features=15, out_features=20, exp_rate=2)
 

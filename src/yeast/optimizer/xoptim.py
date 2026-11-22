@@ -12,8 +12,8 @@ from torch.optim import Optimizer
 from torch import nn
 
 from yeast.exceptions import YeastRuntimeError
-from yeast.layers.xlinear import XLinear
-from yeast.layers.xparam import XParameter
+from yeast.nn.xlinear import XLinear
+from yeast.nn.xparam import XParameter
 from ._optim_utils import _gss
 
 from typing import Iterable, Any
@@ -58,7 +58,7 @@ class XOptimizer:
             raise ValueError(f"'wait_for_expansion' must be >= 0, got {wait_for_expansion}")
         self.wait_for_expansion = wait_for_expansion
         self._cooldown = 0
-        self.xlayers_list: list[XLinear] = self._get_xlayers()  # this list is for containing the references to the expanding layers
+        self.xlayers_list: list[XLinear] = self._get_xlayers()  # this list is for containing the references to the expanding nn
 
     """
     These are some resources to create a safe bridge to the PyTorch optimizer I've created inside XOptimizer.
@@ -107,7 +107,7 @@ class XOptimizer:
 
     def xstep(self) -> None:
         """
-        This function is designed to expand the layers, using optimized algorithms,
+        This function is designed to expand the nn, using optimized algorithms,
         also updating their dicts (like 'state_dict' or 'param_groups') so the PyTorch optimizer doesn't break
         Also calls the classic .step() method from the original optimizer
         :return: None
@@ -129,7 +129,7 @@ class XOptimizer:
                 std, mean = torch.std_mean(gss, correction=0)
                 z_score = round(((max_gss - mean) / (
                         std + 1e-8)).item())  # calculating the z-score, it knows how much the highest value deviates from the mean. It's rounded, so it can be used for the expansion
-                if layer.exp_rate > 0 and z_score >= 2:  # the first condition avoid filter layers, the second avoids tiny useless expansions
+                if layer.exp_rate > 0 and z_score >= 2:  # the first condition avoid filter nn, the second avoids tiny useless expansions
                     # each new neuron adds in_features weights + 1 bias, so we check the real cost before expanding
                     new_neurons = z_score * layer.exp_rate
                     cost = new_neurons * (layer.in_features + 1)
@@ -158,7 +158,7 @@ class XOptimizer:
 
     def _get_xlayers(self) -> list[XLinear]:
         """
-        Gets all the expanding layers from the given modules
+        Gets all the expanding nn from the given modules
         :return: a list of them
         """
         return [m for m in self.model.modules() if isinstance(m, XLinear)]

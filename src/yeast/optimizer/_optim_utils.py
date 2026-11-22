@@ -9,7 +9,7 @@ __all__ = ["_gss"]
 
 import torch
 
-from yeast.layers import XLinear
+from yeast.nn import XLinear
 
 
 def _gss(layer: XLinear,) -> torch.Tensor:

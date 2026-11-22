@@ -6,12 +6,12 @@ Contains the class that groups ExpLinear and FilterLayer for an easier implement
 
 from torch.nn import functional as f
 
-from yeast.layers.xlinear import XLinear
+from yeast.nn.xlinear import XLinear
 
 
 class XAdapter(XLinear):
     """
-    This class is designed to create XLinear layers that can be inserted in a classic NN without input sizes errors.
+    This class is designed to create XLinear nn that can be inserted in a classic NN without input sizes errors.
     For ensure this, the XAdapter layer has a second "filter" XLinear layer that keep the output identical during all the training
     """
 

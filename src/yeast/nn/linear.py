@@ -19,7 +19,7 @@ class XLinear(nn.Module):
     """
     This class creates a XLinear, abbreviation of expanding linear (layer).
     This is a special linear layer, because it can expand its structure automatically,
-    both for user instructions and for the expansion of previous layers
+    both for user instructions and for the expansion of previous nn
     """
 
     def __init__(self, out_features: int, in_features:int, exp_rate: int = 1, ):

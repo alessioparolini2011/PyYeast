@@ -1,13 +1,12 @@
 """
 demonstration.py
 Authors: Alessio Parolini
-This file provide a run-ready demonstration of the features of the project "PyYeast"
+This file provides a run-ready demonstration of the features of the project "PyYeast"
 """
 import torch
-from torch import nn
-from torch import optim
+from torch import nn, optim
 
-from yeast.layers import XAdapter, XLinear
+from yeast.nn import XAdapter, XLinear
 from yeast.optimizer import XOptimizer
 
 
@@ -18,63 +17,101 @@ class MyModule(nn.Module):
         self.l1 = nn.Linear(in_features=1, out_features=5)
         self.sell = XLinear(in_features=5, out_features=7, exp_rate=1)
         self.adapter = XAdapter(in_features=7, out_features=10, exp_rate=2)
-        self.l2 = nn.Linear(in_features=10, out_features=1)
+        self.l2 = nn.Linear(in_features=10, out_features=1)  # you can use a classic linear after XAdapter
 
     def forward(self, x):
         x = self.relu(self.l1(x))
         x = self.relu(self.sell(x))
         x = self.relu(self.adapter(x))
-        x = self.l2(x)  # you can use a linear after a
+        x = self.l2(x)
         return x
 
 
 def main():
+    torch.manual_seed(42)  # keeping results reproducible
     print("""
     \n\nWelcome to PyYeast!
-    Package created by: Alessio Parolini (https://my-code-portfolio-ten.vercel.app/)
+    Package created by: Alessio Parolini (https://vercel.app)
     Root:
-    GitHub: https://github.com/alessioparolini2011/PyYeast/
-    PyPI: https://pypi.org/project/pyyeast/
-    I hope I'll find useful my project! Remember to leave a star on GitHub!\n\n""")
+    GitHub: https://github.com
+    PyPI: https://pypi.org
+    I hope you'll find my project useful! Remember to leave a star on GitHub!\n\n""")
+
     model = MyModule()  # creating the model
-    optimizer = XOptimizer(algorithm=optim.Adam, model=model, params=model.parameters(), max_params=int(2e7), wait_for_expansion=25, lr=0.01)  # creating the optimizer
+    optimizer = XOptimizer(
+        algorithm=optim.Adam,
+        model=model,
+        params=model.parameters(),
+        max_params=int(5e5),
+        wait_for_expansion=25,
+        lr=0.01,
+    )
     criterion = nn.MSELoss()  # choosing the loss function
-    input_tensor = torch.rand(100, 1)  # creating input
-    output_tensor = torch.sin(input_tensor)  # a simple math operation to find the output
+
+    # Creating 300 evenly spaced points between -3 and 3 (shape:)
+    input_tensor = torch.linspace(-3.0, 3.0, 300).unsqueeze(1)
+    output_tensor = torch.sin(3 * input_tensor) + 0.5 * torch.cos(7 * input_tensor)
+
     print("\nStats before training:\n")
     print(f"l1 (classic): {tuple(model.l1.weight.shape)}")
     print(f"sell (XLinear): {tuple(model.sell.weight.shape)}")
     print(f"adapter (XAdapter): {tuple(model.adapter.weight.shape)}")
     print(f"filter: {tuple(model.adapter.filter.weight.shape)}")
     print(f"l2 (classic): {tuple(model.l2.weight.shape)}")
-    total = sum(p.numel() for p in model.parameters())  # counting total params
-    print(f"total params: {total}")
+    start_params = optimizer.model_size()
+    print(f"total params: {start_params}")
+
     print("\nTRAINING!\n")
-    for epoch in range(700):
+    initial_loss: float | None = None
+    best_loss = float("inf")
+    best_epoch = 0
+    expansions_count = 0
+
+    for epoch in range(600):
         optimizer.zero_grad()
         model_out = model(input_tensor)
         loss = criterion(model_out, output_tensor)
+        loss_val = loss.item()
+
+        if initial_loss is None:
+            initial_loss = loss_val  # saving the very first loss to measure total improvement
+        if loss_val < best_loss:
+            best_loss = loss_val
+            best_epoch = epoch
+
         loss.backward()
-        total_before = sum(p.numel() for p in model.parameters())  # save total to detect expansion
+
+        total_before = optimizer.model_size()  # save total to detect expansion
         optimizer.xstep()
-        total = sum(p.numel() for p in model.parameters())
+        total = optimizer.model_size()
+
         expanded = total != total_before  # check if it grew
-        if expanded or epoch % 200 == 0:
-            with torch.no_grad():
-                loss_after = criterion(model(input_tensor), output_tensor)  # loss after expansion
-            lost = ((loss_after - loss) / loss * 100).item()  # loss lost in percent for this expansion
-            print(f"epoch {epoch} - loss: {loss.item():.4f} - loss after: {loss_after.item():.4f} - lost: {lost:.2f}% - total params: {total} - expanded: {expanded}")
-        else:
-            print(loss.item())
+        if expanded:
+            expansions_count += 1
+
+        if expanded or epoch % 100 == 0:
+            total_drop = (1 - loss_val / initial_loss) * 100  # overall reduction since epoch 0
+            print(
+                f"epoch {epoch:3d} | loss: {loss_val:.5f} | "
+                f"total drop: -{total_drop:.2f}% | "
+                f"params: {total} | expanded: {expanded}"
+            )
+
+    final_loss = loss.item()
+    final_params = optimizer.model_size()
+    overall_reduction = (1 - final_loss / initial_loss) * 100
+
     print("\nStats after training:\n")
     print(f"sell (XLinear): {tuple(model.sell.weight.shape)}")
     print(f"adapter (XAdapter): {tuple(model.adapter.weight.shape)}")
     print(f"filter: {tuple(model.adapter.filter.weight.shape)}")
     print(f"l2 (classic): {tuple(model.l2.weight.shape)}")
-    total = sum(p.numel() for p in model.parameters())
-    print(f"total params: {total} / max_params: {optimizer.max_params}")
-    total = sum(p.numel() for p in model.parameters())
-    print(f"total params after final_forward: {total}")
+    print(f"\n--- Summary ---")
+    print(f"Initial loss:      {initial_loss:.5f}")
+    print(f"Final loss:        {final_loss:.5f} (-{overall_reduction:.2f}% overall)")
+    print(f"Best loss:         {best_loss:.5f} (at epoch {best_epoch})")
+    print(f"Total expansions:  {expansions_count}")
+    print(f"Total params:      {start_params} -> {final_params} / {optimizer.max_params} (x{final_params / start_params:.1f} growth)")
 
 
 if __name__ == "__main__":

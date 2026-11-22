@@ -11,7 +11,7 @@ import torch
 from torch import nn
 from torch.nn import functional as f
 
-from yeast.layers.xparam import XParameter
+from yeast.nn.xparam import XParameter
 
 from yeast.exceptions import YeastException, YeastValueError, YeastTypeError, YeastRuntimeError
 
