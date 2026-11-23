@@ -232,7 +232,7 @@ print(x_optimizer.model_size()) # OUTPUT EXAMPLE: 257
 
 ```
 
-+ `xstep()`: does the classic `step()` of the optimizer, **and** it checks if a layer needs to expand. If yes, it expands it starting from the neuron with the highest GSS, as a noisy copy of it, and it updates all the optimizer dicts by itself.
++ `xstep(expand=True)`: does the classic `step()` of the optimizer, **and** it checks if a layer needs to expand. If yes, it expands it starting from the neuron with the highest GSS, as a noisy copy of it, and it updates all the optimizer dicts by itself. Argument `expand` is `True` by default. If it's `False`, it only synchronizes the params dicts and does `step()`
 
 + `step(closure=None)`: works like a classic PyTorch optimizer `step()`. You don't need it if you use `xstep()`, it's there only to keep the compatibility with PyTorch.
 

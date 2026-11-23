@@ -113,6 +113,8 @@ class XOptimizer:
         :param expand: if it's False only synchronize params and do the classic .step()
         :return: None
         """
+        if not isinstance(expand, bool):
+            raise TypeError(f"'expand' must be a boolean, got {type(expand).__name__}")
         for layer in self.xlayers_list:
             self._sync_params(layer.weight)
             self._sync_params(layer.bias) # this operation is SUPER IMPORTANT to synchronize the parameters added during the forward (with _input_adapting) due to a previous layer expansion
