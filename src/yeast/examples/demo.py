@@ -9,6 +9,10 @@ from torch import nn, optim
 from yeast.nn import XAdapter, XLinear
 from yeast.optimizer import XOptimizer
 
+"""
+TRAINING STATS
+"""
+EPOCHS = 600
 
 class MyModule(nn.Module):
     def __init__(self):
@@ -67,7 +71,7 @@ def main():
     best_epoch = 0
     expansions_count = 0
 
-    for epoch in range(600):
+    for epoch in range(EPOCHS):
         optimizer.zero_grad()
         model_out = model(input_tensor)
         loss = criterion(model_out, output_tensor)
@@ -96,6 +100,10 @@ def main():
                 f"total drop: -{total_drop:.2f}% | "
                 f"params: {total} | expanded: {expanded}"
             )
+
+    with torch.no_grad():
+        model(input_tensor) # a last forward for equalize params
+        optimizer.xstep(expand=False)  # only synchronizes params
 
     final_loss = loss.item()
     final_params = optimizer.model_size()

@@ -105,18 +105,19 @@ class XOptimizer:
         return f"{type(self).__name__}({repr(self.optimizer)})"
 
 
-    def xstep(self) -> None:
+    def xstep(self, expand = True) -> None:
         """
         This function is designed to expand the nn, using optimized algorithms,
         also updating their dicts (like 'state_dict' or 'param_groups') so the PyTorch optimizer doesn't break
         Also calls the classic .step() method from the original optimizer
+        :param expand: if it's False only synchronize params and do the classic .step()
         :return: None
         """
         for layer in self.xlayers_list:
             self._sync_params(layer.weight)
             self._sync_params(layer.bias) # this operation is SUPER IMPORTANT to synchronize the parameters added during the forward (with _input_adapting) due to a previous layer expansion
         self._cooldown += 1
-        if self._cooldown >= self.wait_for_expansion:
+        if expand and self._cooldown >= self.wait_for_expansion:
             self._cooldown = 0
             for layer in self.xlayers_list:
                 bias = layer.bias
