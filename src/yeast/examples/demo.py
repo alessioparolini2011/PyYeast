@@ -13,7 +13,8 @@ from yeast.optimizer import XOptimizer
 TRAINING STATS
 """
 EPOCHS = 600
-MAX_PARAMS = int(5e5) # if you use exponential remeber to use int() because Python considers it a float
+MAX_PARAMS = int(5e5) # if you use exponential remember to use int() because Python considers it a float
+WAIT_BEFORE_EXPANSION = 25 # how many times skips the expansion after it does one, to give the time to the params to train themselves
 
 class MyModule(nn.Module):
     def __init__(self):
@@ -48,7 +49,7 @@ def main():
         model=model,
         params=model.parameters(),
         max_params=MAX_PARAMS,
-        wait_for_expansion=25,
+        wait_for_expansion=WAIT_BEFORE_EXPANSION,
         lr=0.01,
     )
     criterion = nn.MSELoss()  # choosing the loss function
