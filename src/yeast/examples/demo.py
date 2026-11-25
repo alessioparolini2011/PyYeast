@@ -13,6 +13,7 @@ from yeast.optimizer import XOptimizer
 TRAINING STATS
 """
 EPOCHS = 600
+MAX_PARAMS = int(5e5) # if you use exponential remeber to use int() because Python considers it a float
 
 class MyModule(nn.Module):
     def __init__(self):
@@ -46,7 +47,7 @@ def main():
         algorithm=optim.Adam,
         model=model,
         params=model.parameters(),
-        max_params=int(5e5),
+        max_params=MAX_PARAMS,
         wait_for_expansion=25,
         lr=0.01,
     )
