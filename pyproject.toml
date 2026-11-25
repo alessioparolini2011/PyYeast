@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "pyyeast"
-version = "0.4.0"
+version = "1.0.0"
 requires-python = ">=3.12"
 authors = [
     {name = "Alessio Parolini", email = "alepar.ap9@gmail.com"}
